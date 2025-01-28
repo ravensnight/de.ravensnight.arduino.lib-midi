@@ -31,22 +31,22 @@ void MidiDevice::usbCallback(void *arg, esp_event_base_t event_base, int32_t eve
         switch (event_id) {
             case ARDUINO_USB_STARTED_EVENT:
                 Logger::defaultLogger().info("USB PLUGGED");
-                MidiIO._available = true;
+                MidiDevice::instance._available = true;
                 break;
 
             case ARDUINO_USB_STOPPED_EVENT:
                 Logger::defaultLogger().info("USB UNPLUGGED");
-                MidiIO._available = false;
+                MidiDevice::instance._available = false;
                 break;
 
             case ARDUINO_USB_SUSPEND_EVENT:
                 Logger::defaultLogger().info("USB SUSPENDED: remote_wakeup_en: %d", data->suspend.remote_wakeup_en);
-                MidiIO._available = false;
+                MidiDevice::instance._available = false;
                 break;
 
             case ARDUINO_USB_RESUME_EVENT:
                 Logger::defaultLogger().info("USB RESUMED");
-                MidiIO._available = true;
+                MidiDevice::instance._available = true;
                 break;
 
             default:
@@ -130,4 +130,4 @@ bool MidiDevice::available() {
     return _available;
 }
 
-MidiDevice MIDI::MidiIO = MidiDevice();
+MidiDevice MidiDevice::instance = MidiDevice();

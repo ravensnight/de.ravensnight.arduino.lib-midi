@@ -36,7 +36,7 @@ int MidiStream::read() {
 size_t MidiStream::write(uint8_t b) {
     uint8_t buf[1] = { b };    
 
-    if (!MidiIO.available()) {
+    if (!MidiDevice::instance.available()) {
         Logger::defaultLogger().debug("Do not write to midi out, since USB is not available.");
         return 0;
     }
@@ -47,7 +47,7 @@ size_t MidiStream::write(uint8_t b) {
 size_t MidiStream::write(const uint8_t *buf, size_t size) {
     int len = 0;
 
-    if (!MidiIO.available()) {
+    if (!MidiDevice::instance.available()) {
         Logger::defaultLogger().debug("Do not write to midi out, since USB is not available.");
         return 0;
     }

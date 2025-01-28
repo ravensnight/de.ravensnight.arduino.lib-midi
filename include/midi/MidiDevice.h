@@ -71,17 +71,17 @@ class MidiDevice {
         static void usbCallback(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data);
         static uint16_t descriptorCallback(uint8_t * dst, uint8_t * itf);
 
+        MidiDevice();
+
     public:
 
-        MidiDevice();
+        static MidiDevice instance;
 
         // install this interface to USB
         void install(const USBPortConfig& config);
 
         bool available();
 };
-
-extern MidiDevice MidiIO;
 
 }
 #endif // __MIDI_H__
