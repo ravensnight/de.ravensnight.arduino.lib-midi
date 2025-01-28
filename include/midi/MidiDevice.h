@@ -78,7 +78,7 @@ class MidiDevice {
         static MidiDevice instance;
 
         // install this interface to USB
-        void install(const USBPortConfig& config);
+        static void setup(const USBPortConfig& config);
 
         bool available();
 };

@@ -102,7 +102,7 @@ USBPortConfig::USBPortConfig (
         this->serial = serial;
 };
 
-void MidiDevice::install(const USBPortConfig& config) {
+void MidiDevice::setup(const USBPortConfig& config) {
 
     // Change USB Device Descriptor Parameter
     USB.VID(config.vendorId); // vendor id
