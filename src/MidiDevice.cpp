@@ -30,22 +30,22 @@ void MidiDevice::usbCallback(void *arg, esp_event_base_t event_base, int32_t eve
         arduino_usb_event_data_t *data = (arduino_usb_event_data_t *)event_data;
         switch (event_id) {
             case ARDUINO_USB_STARTED_EVENT:
-                Logger::defaultLogger().info("USB PLUGGED");
+                Logger::instance.info("USB PLUGGED");
                 MidiDevice::instance._available = true;
                 break;
 
             case ARDUINO_USB_STOPPED_EVENT:
-                Logger::defaultLogger().info("USB UNPLUGGED");
+                Logger::instance.info("USB UNPLUGGED");
                 MidiDevice::instance._available = false;
                 break;
 
             case ARDUINO_USB_SUSPEND_EVENT:
-                Logger::defaultLogger().info("USB SUSPENDED: remote_wakeup_en: %d", data->suspend.remote_wakeup_en);
+                Logger::instance.info("USB SUSPENDED: remote_wakeup_en: %d", data->suspend.remote_wakeup_en);
                 MidiDevice::instance._available = false;
                 break;
 
             case ARDUINO_USB_RESUME_EVENT:
-                Logger::defaultLogger().info("USB RESUMED");
+                Logger::instance.info("USB RESUMED");
                 MidiDevice::instance._available = true;
                 break;
 
@@ -54,7 +54,7 @@ void MidiDevice::usbCallback(void *arg, esp_event_base_t event_base, int32_t eve
         }
     } 
     else if (event_base == USB_MIDI_EVENTS) {
-        Logger::defaultLogger().debug("MIDI EVENT:  ID=%d, DATA=%d\r\n", event_id, (uint32_t)event_data);
+        Logger::instance.debug("MIDI EVENT:  ID=%d, DATA=%d\r\n", event_id, (uint32_t)event_data);
     }
 }
 

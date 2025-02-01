@@ -115,6 +115,6 @@ void MidiWriter::sendSysEx(uint8_t channel, uint8_t payload[], uint16_t len) {
     memcpy(buffer + 2, payload, len);
     buffer[len + 2] = (uint8_t)MessageType::SysExEnd;
     
-    Logger::defaultLogger().dump("Send SysEx bytes: ", buffer, size, 0);
+    Logger::instance.dump("Send SysEx bytes: ", buffer, size, 0);
     _stream->write(buffer, size);    
 }

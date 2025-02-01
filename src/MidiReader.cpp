@@ -114,16 +114,16 @@ void MidiReader::parse() {
                 break;
 
             case MessageType::SysExStart:
-                Logger::defaultLogger().debug("Received SysEx for Manufacturer: %x", msg.value1);
+                Logger::instance.debug("Received SysEx for Manufacturer: %x", msg.value1);
                 _midiCallback->onSysEx(msg.value1, this);
                 break;
 
             case MessageType::SysExEnd:
-                Logger::defaultLogger().debug("Received SysExEnd.");
+                Logger::instance.debug("Received SysExEnd.");
                 break;
 
             default:
-                Logger::defaultLogger().debug("Unhandled command: %x. Skip.", _command);
+                Logger::instance.debug("Unhandled command: %x. Skip.", _command);
                 break;
             }     
         }
@@ -140,7 +140,7 @@ uint16_t MidiReader::readSysEx(uint8_t buffer[], uint16_t len) {
     for (uint16_t i = 0; i < len; i++) {
         if (_stream->readBytes(buf, 1) > 0) {
             if ((buf[0] & 0x80) == 0x80) {
-                Logger::defaultLogger().warn("Received end of stream signal %x at position %d. Stop here.", buf[0], i);
+                Logger::instance.warn("Received end of stream signal %x at position %d. Stop here.", buf[0], i);
                 return i;
             }
         }
@@ -149,13 +149,13 @@ uint16_t MidiReader::readSysEx(uint8_t buffer[], uint16_t len) {
         buffer[i] = buf[0];
     }
 
-    Logger::defaultLogger().dump("Received SysEx bytes:  ", buffer, len, 0);
+    Logger::instance.dump("Received SysEx bytes:  ", buffer, len, 0);
     return len;
 }
 
 void MidiReader::skipSysEx() {
     uint8_t b[1];
     while (_stream->readBytes(b, 1) > 0) {
-        Logger::defaultLogger().debug("Skip sysex byte: 0x%x", b[0]);
+        Logger::instance.debug("Skip sysex byte: 0x%x", b[0]);
     }
 }
