@@ -60,15 +60,12 @@ void MidiDevice::usbCallback(void *arg, esp_event_base_t event_base, int32_t eve
 
 uint16_t MidiDevice::descriptorCallback(uint8_t * dst, uint8_t * itf) {
 
-    uint8_t cable1Idx = tinyusb_add_string_descriptor("SH-1210F Control");
-    uint8_t cable2Idx = tinyusb_add_string_descriptor("SH-1210F Configuration");
-
     uint8_t descriptor[TUSB_MIDI_DESCRIPTOR_LEN] = {
         TUD_MIDI_DESC_HEAD(*itf, 4, CABLE_COUNT),           // header
 
         // jack descriptors
-        TUD_MIDI_DESC_JACK_DESC(1, cable1Idx),                      // cable 1
-        TUD_MIDI_DESC_JACK_DESC(2, cable2Idx),                      // cable 2
+        TUD_MIDI_DESC_JACK_DESC(1, 5),                      // cable 1
+        TUD_MIDI_DESC_JACK_DESC(2, 6),                      // cable 2
         // TUD_MIDI_DESC_JACK_DESC(3, 0),                   // cable 3
 
         // inbound endpoint descriptors
@@ -120,8 +117,16 @@ void MidiDevice::setup(const USBPortConfig& config) {
     
     if (config.serial != 0) USB.serialNumber(config.serial);
     if (config.productName != 0) USB.productName(config.productName);
-    if (config.productDescription != 0) tinyusb_add_string_descriptor(config.productDescription);
     if (config.manufacturerName != 0) USB.manufacturerName(config.manufacturerName);
+    
+    if (config.productDescription != 0) {
+        tinyusb_add_string_descriptor(config.productDescription);
+    } else {
+        tinyusb_add_string_descriptor(config.productDescription);
+    }
+
+    tinyusb_add_string_descriptor("SH-1210F Control");
+    tinyusb_add_string_descriptor("SH-1210F Configuration");
 
     tinyusb_enable_interface(USB_INTERFACE_MIDI, TUSB_MIDI_DESCRIPTOR_LEN, descriptorCallback);
 
