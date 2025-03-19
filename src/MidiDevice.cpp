@@ -10,8 +10,8 @@ using namespace LOGGING;
 #endif
 
 #ifndef CABLE_COUNT 
-    #define CABLE_COUNT 1
-#endif 
+    #define CABLE_COUNT 2
+#endif
 
 #define TUSB_MIDI_DESCRIPTOR_LEN (  \
     TUD_MIDI_DESC_HEAD_LEN + \
@@ -60,24 +60,27 @@ void MidiDevice::usbCallback(void *arg, esp_event_base_t event_base, int32_t eve
 
 uint16_t MidiDevice::descriptorCallback(uint8_t * dst, uint8_t * itf) {
 
+    uint8_t cable1Idx = tinyusb_add_string_descriptor("SH-1210F Control");
+    uint8_t cable2Idx = tinyusb_add_string_descriptor("SH-1210F Configuration");
+
     uint8_t descriptor[TUSB_MIDI_DESCRIPTOR_LEN] = {
         TUD_MIDI_DESC_HEAD(*itf, 4, CABLE_COUNT),           // header
 
         // jack descriptors
-        TUD_MIDI_DESC_JACK_DESC(1, 0),                      // cable 1
-        // TUD_MIDI_DESC_JACK_DESC(2, 0),                   // cable 2
+        TUD_MIDI_DESC_JACK_DESC(1, cable1Idx),                      // cable 1
+        TUD_MIDI_DESC_JACK_DESC(2, cable2Idx),                      // cable 2
         // TUD_MIDI_DESC_JACK_DESC(3, 0),                   // cable 3
 
         // inbound endpoint descriptors
         TUD_MIDI_DESC_EP(MIDI_ENDPOINT_COUNT, 64, CABLE_COUNT),      
         TUD_MIDI_JACKID_IN_EMB(1),                          // cable 1
-        // TUD_MIDI_JACKID_IN_EMB(2),                       // cable 2
+        TUD_MIDI_JACKID_IN_EMB(2),                          // cable 2
         // TUD_MIDI_JACKID_IN_EMB(3),                       // cable 3
         
         // outbound endpoint descriptors
         TUD_MIDI_DESC_EP(0x80 | MIDI_ENDPOINT_COUNT, 64, CABLE_COUNT),   
         TUD_MIDI_JACKID_OUT_EMB(1),
-        // TUD_MIDI_JACKID_OUT_EMB(2),
+        TUD_MIDI_JACKID_OUT_EMB(2),
         // TUD_MIDI_JACKID_OUT_EMB(3)
     };
 
