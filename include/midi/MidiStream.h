@@ -3,16 +3,20 @@
 
 #include <Stream.h>
 
+#include "Adafruit_TinyUSB.h"
+// #include "tusb.h"
+
 namespace MIDI {
 
     class MidiStream : public Stream {
 
         private:
-            uint8_t cable, intf;
+
+            Adafruit_USBD_MIDI* midiPort = 0;;
 
         public:
 
-            MidiStream(uint8_t intf, uint8_t cable);
+            MidiStream(const char* portName);
 
             int available();
             int read();

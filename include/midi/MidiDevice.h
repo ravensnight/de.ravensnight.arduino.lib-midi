@@ -2,10 +2,7 @@
 #define __MIDI_H__
 
 #include <Arduino.h>
-#include <Stream.h>
-
-#include <esp32-hal-tinyusb.h>
-#include <USB.h>
+#include "MidiStream.h"
 
 namespace MIDI {
 
@@ -54,33 +51,32 @@ class USBPortConfig {
         int productId;
         int firmwareVersion;
         int usbPower;
+        int usbVersion;
         const char* productName;
         const char* productDescription;
         const char* manufacturerName;
         const char* serial;
 
-        USBPortConfig( int vendorId, int productId, int firmwareVersion, int usbPower, const char* productName, const char* productDescription, const char* manufacturerName, const char* serial);
+        USBPortConfig( int vendorId, int productId, int firmwareVersion, int usbVersion, int usbPower, const char* productName, const char* productDescription, const char* manufacturerName, const char* serial);
 };
+
+#ifndef MAX_MIDI_STREAMS
+    #define MAX_MIDISTREAMS 2
+#endif
 
 class MidiDevice {
 
     private:
 
-        bool _available = false;
-
-        static void usbCallback(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data);
-        static uint16_t descriptorCallback(uint8_t * dst, uint8_t * itf);
-
-        MidiDevice();
+        static uint8_t stream_count;
 
     public:
 
-        static MidiDevice instance;
+        static MidiStream* addStream(const char* name);
 
         // install this interface to USB
         static void setup(const USBPortConfig& config);
 
-        bool available();
 };
 
 }

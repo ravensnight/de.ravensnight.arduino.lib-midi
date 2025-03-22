@@ -5,55 +5,45 @@
 using namespace LOGGING;
 using namespace MIDI;
 
-MidiStream::MidiStream(uint8_t intf, uint8_t cable) {
-    this->cable = cable;
-    this->intf = intf;
+MidiStream::MidiStream(const char* portName) {
+    midiPort = new Adafruit_USBD_MIDI();
+    if (portName != 0) {
+        midiPort->setStringDescriptor(portName);
+    }
+
+    midiPort->begin();
 }
 
 int MidiStream::peek() {
-    return -1;
+    return midiPort->peek();
 }
 
-int MidiStream::available() {
-    return tud_midi_n_available(this->intf, this->cable);
+int MidiStream::available() {    
+    return midiPort->available();
 }
 
 int MidiStream::read() {
-    
-    uint8_t buf[1];
-    size_t len;
-
-    if (available() > 0) {
-        len = tud_midi_n_stream_read(this->intf, this->cable, buf, 1);        
-        if (len == 1) {
-            return buf[0];
-        }
-    }
-
-    return -1;
+    return midiPort->read();
 }
 
 size_t MidiStream::write(uint8_t b) {
-    uint8_t buf[1] = { b };    
-
-    if (!MidiDevice::instance.available()) {
-        Logger::instance.debug("Do not write to midi out, since USB is not available.");
-        return 0;
+    if (midiPort->availableForWrite()) {
+        return midiPort->write(b);
     }
 
-    return tud_midi_n_stream_write(this->intf, this->cable, buf, 1);    
+    return 0;
 }
 
 size_t MidiStream::write(const uint8_t *buf, size_t size) {
     int len = 0;
 
-    if (!MidiDevice::instance.available()) {
+    if (!midiPort->availableForWrite()) {
         Logger::instance.debug("Do not write to midi out, since USB is not available.");
         return 0;
     }
     
     do {
-        len += tud_midi_n_stream_write(this->intf, this->cable, buf + len, size - len);
+        len += midiPort->write(buf + len, size - len);
         Logger::instance.debug("Stream::write - write buffer of size: %d, sent: %d", size, len);
     } while (len < size);
 
