@@ -9,19 +9,9 @@ using namespace LOGGING;
     #define MIDI_ENDPOINT_COUNT 1
 #endif
 
-#ifndef CABLE_COUNT 
-    #define CABLE_COUNT 1
-#endif 
-
-#define TUSB_MIDI_DESCRIPTOR_LEN (  \
-    TUD_MIDI_DESC_HEAD_LEN + \
-    TUD_MIDI_DESC_JACK_LEN * CABLE_COUNT + \
-    TUD_MIDI_DESC_EP_LEN(CABLE_COUNT) * 2 )
-
 ESP_EVENT_DEFINE_BASE(USB_MIDI_EVENTS);
 
 MidiDevice::MidiDevice() {    
-    _available = false;
 }
 
 void MidiDevice::usbCallback(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data) {
@@ -31,22 +21,22 @@ void MidiDevice::usbCallback(void *arg, esp_event_base_t event_base, int32_t eve
         switch (event_id) {
             case ARDUINO_USB_STARTED_EVENT:
                 Logger::instance.info("USB PLUGGED");
-                MidiDevice::instance._available = true;
+                _available = true;
                 break;
 
             case ARDUINO_USB_STOPPED_EVENT:
                 Logger::instance.info("USB UNPLUGGED");
-                MidiDevice::instance._available = false;
+                _available = false;
                 break;
 
             case ARDUINO_USB_SUSPEND_EVENT:
                 Logger::instance.info("USB SUSPENDED: remote_wakeup_en: %d", data->suspend.remote_wakeup_en);
-                MidiDevice::instance._available = false;
+                _available = false;
                 break;
 
             case ARDUINO_USB_RESUME_EVENT:
                 Logger::instance.info("USB RESUMED");
-                MidiDevice::instance._available = true;
+                _available = true;
                 break;
 
             default:
@@ -58,37 +48,66 @@ void MidiDevice::usbCallback(void *arg, esp_event_base_t event_base, int32_t eve
     }
 }
 
+uint16_t MidiDevice::calculateDescriptorLength() {
+    return TUD_MIDI_DESC_HEAD_LEN + \
+           TUD_MIDI_DESC_JACK_LEN * cableCount + \
+           TUD_MIDI_DESC_EP_LEN(cableCount) * 2;
+} 
+
 uint16_t MidiDevice::descriptorCallback(uint8_t * dst, uint8_t * itf) {
 
-    uint8_t descriptor[TUSB_MIDI_DESCRIPTOR_LEN] = {
-        TUD_MIDI_DESC_HEAD(*itf, 4, CABLE_COUNT),           // header
+    uint16_t len = calculateDescriptorLength();
+    uint16_t pos = 0;
 
-        // jack descriptors
-        TUD_MIDI_DESC_JACK_DESC(1, 0),                      // cable 1
-        // TUD_MIDI_DESC_JACK_DESC(2, 0),                   // cable 2
-        // TUD_MIDI_DESC_JACK_DESC(3, 0),                   // cable 3
+    uint8_t head[] = { TUD_MIDI_DESC_HEAD(*itf, 4, cableCount) };
+    memcpy(dst, head, TUD_MIDI_DESC_HEAD_LEN);
+    pos += TUD_MIDI_DESC_HEAD_LEN;
 
-        // inbound endpoint descriptors
-        TUD_MIDI_DESC_EP(MIDI_ENDPOINT_COUNT, 64, CABLE_COUNT),      
-        TUD_MIDI_JACKID_IN_EMB(1),                          // cable 1
-        // TUD_MIDI_JACKID_IN_EMB(2),                       // cable 2
-        // TUD_MIDI_JACKID_IN_EMB(3),                       // cable 3
-        
-        // outbound endpoint descriptors
-        TUD_MIDI_DESC_EP(0x80 | MIDI_ENDPOINT_COUNT, 64, CABLE_COUNT),   
-        TUD_MIDI_JACKID_OUT_EMB(1),
-        // TUD_MIDI_JACKID_OUT_EMB(2),
-        // TUD_MIDI_JACKID_OUT_EMB(3)
-    };
+    // add jack descriptors
+    for (uint8_t i = 0; i < cableCount; i++) {
+        uint8_t array1[] = { TUD_MIDI_DESC_JACK_DESC(i + 1, 0) };
+        memcpy(dst + pos, array1, sizeof(array1));        
+        pos += sizeof(array1);
+    }
+    
+    // add inbound endpoint descriptors
+    uint8_t desc1[] = { TUD_MIDI_DESC_EP(MIDI_ENDPOINT_COUNT, 64, cableCount) };
+    memcpy(dst + pos, desc1 , sizeof(desc1));
+    pos += sizeof(desc1);
+
+    for (uint8_t i = 0; i < cableCount; i++) {
+        uint8_t jackIn[] = { TUD_MIDI_JACKID_IN_EMB(i + 1) };
+        memcpy(dst + pos, jackIn, sizeof(jackIn));
+        pos += sizeof(jackIn);
+    }
+
+    // add outbound endpoint descriptors
+    uint8_t desc2[] = { TUD_MIDI_DESC_EP(0x80 | MIDI_ENDPOINT_COUNT, 64, cableCount) };
+    memcpy(dst + pos, desc2 , sizeof(desc2));
+    pos += sizeof(desc2);
+
+    for (uint8_t i = 0; i < cableCount; i++) {
+        uint8_t jackOut[] = { TUD_MIDI_JACKID_OUT_EMB(i + 1) };
+        memcpy(dst + pos, jackOut, sizeof(jackOut));
+        pos += sizeof(jackOut);
+    }
 
     *itf += 2;  // +2 interface count(Audio Control, Midi Streaming)
-
-    memcpy(dst, descriptor, TUSB_MIDI_DESCRIPTOR_LEN);
-    return TUSB_MIDI_DESCRIPTOR_LEN;
-
+    return len;
 }
 
-void MidiDevice::setup(const USBPortConfig& config) {
+int8_t MidiDevice::addCable(const char* name) {
+    if (cableCount < MAX_CABLE_COUNT) {
+        cableNames[cableCount] = name;
+        cableCount++;
+
+        return (cableCount - 1);
+    }
+
+    return -1;
+}
+
+void MidiDevice::setup(const USBConfig& config) {
 
     // Change USB Device Descriptor Parameter
     USB.VID(config.vendorId); // vendor id
@@ -99,17 +118,23 @@ void MidiDevice::setup(const USBPortConfig& config) {
     USB.usbClass(TUSB_CLASS_AUDIO);
     USB.usbSubClass(0x00);
     USB.usbProtocol(0x00);
-    USB.usbAttributes(0x80);
-    
-    if (config.serial != 0) USB.serialNumber(config.serial);
-    if (config.productName != 0) USB.productName(config.productName);
-    if (config.productDescription != 0) tinyusb_add_string_descriptor(config.productDescription);
-    if (config.manufacturerName != 0) USB.manufacturerName(config.manufacturerName);
+    USB.usbAttributes(0x80);    
+    USB.serialNumber(config.serial == 0 ? "0000" : config.serial);
+    USB.productName(config.productName == 0 ? "Midi Device" : config.productName);
+    USB.manufacturerName(config.manufacturerName == 0 ? "SynthHead" : config.manufacturerName);
 
-    tinyusb_enable_interface(USB_INTERFACE_MIDI, TUSB_MIDI_DESCRIPTOR_LEN, descriptorCallback);
+    if (config.productDescription != 0) {
+        tinyusb_add_string_descriptor(config.productDescription);
+    } else {
+        tinyusb_add_string_descriptor("Midi Device Description");
+    }
 
+    tinyusb_enable_interface(USB_INTERFACE_MIDI, calculateDescriptorLength(), descriptorCallback);
     USB.onEvent(MidiDevice::usbCallback);        
+
     USB.begin();
+
+    // available flag is being set in USB callback function.
 }
 
 bool MidiDevice::available() {
@@ -117,3 +142,7 @@ bool MidiDevice::available() {
 }
 
 MidiDevice MidiDevice::instance = MidiDevice();
+
+bool MidiDevice::_available = false;
+uint8_t MidiDevice::cableCount = 0;
+const char* MidiDevice::cableNames[MAX_CABLE_COUNT] = { 0 };
