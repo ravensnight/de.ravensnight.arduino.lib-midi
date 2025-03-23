@@ -47,21 +47,17 @@ enum class MessageType : uint8_t {
 
 };
 
-class USBPortConfig {
-    public:
-
-        int vendorId;
-        int productId;
-        int firmwareVersion;
-        int usbPower;
-        const char* productName;
-        const char* productDescription;
-        const char* manufacturerName;
-        const char* serial;
-
-        USBPortConfig( int vendorId, int productId, int firmwareVersion, int usbPower, const char* productName, const char* productDescription, const char* manufacturerName, const char* serial);
-};
-
+typedef struct _USBPortConfig {
+    int vendorId;
+    int productId;
+    int firmwareVersion;
+    int usbVersion;
+    int usbPower;
+    const char* productName;
+    const char* productDescription;
+    const char* manufacturerName;
+    const char* serial;
+} USBPortConfig;
 class MidiDevice {
 
     private:

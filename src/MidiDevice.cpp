@@ -88,20 +88,6 @@ uint16_t MidiDevice::descriptorCallback(uint8_t * dst, uint8_t * itf) {
 
 }
 
-USBPortConfig::USBPortConfig (
-    int vendorId, int productId, int firmwareVersion, int usbPower, const char* productName,
-    const char* productDescription, const char* manufacturerName, const char* serial ) {
-
-        this->vendorId = vendorId;
-        this->productId = productId;
-        this->firmwareVersion = firmwareVersion;
-        this->usbPower = usbPower;
-        this->productName = productName;
-        this->productDescription = productDescription;
-        this->manufacturerName = manufacturerName;
-        this->serial = serial;
-};
-
 void MidiDevice::setup(const USBPortConfig& config) {
 
     // Change USB Device Descriptor Parameter
@@ -109,7 +95,7 @@ void MidiDevice::setup(const USBPortConfig& config) {
     USB.PID(config.productId);    
     USB.firmwareVersion(config.firmwareVersion);
     USB.usbPower(config.usbPower);
-    USB.usbVersion(0x0200);
+    USB.usbVersion(config.usbVersion);
     USB.usbClass(TUSB_CLASS_AUDIO);
     USB.usbSubClass(0x00);
     USB.usbProtocol(0x00);
