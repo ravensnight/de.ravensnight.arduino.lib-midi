@@ -59,13 +59,14 @@ uint16_t MidiDevice::descriptorCallback(uint8_t * dst, uint8_t * itf) {
     uint16_t len = calculateDescriptorLength();
     uint16_t pos = 0;
 
+    // product name = index 4
     uint8_t head[] = { TUD_MIDI_DESC_HEAD(*itf, 4, cableCount) };
     memcpy(dst, head, TUD_MIDI_DESC_HEAD_LEN);
     pos += TUD_MIDI_DESC_HEAD_LEN;
 
     // add jack descriptors
     for (uint8_t i = 0; i < cableCount; i++) {
-        uint8_t array1[] = { TUD_MIDI_DESC_JACK_DESC(i + 1, 0) };
+        uint8_t array1[] = { TUD_MIDI_DESC_JACK_DESC(i + 1, (uint8_t)(nameIndex + i)) };
         memcpy(dst + pos, array1, sizeof(array1));        
         pos += sizeof(array1);
     }
@@ -122,11 +123,16 @@ void MidiDevice::setup(const USBConfig& config) {
     USB.serialNumber(config.serial == 0 ? "0000" : config.serial);
     USB.productName(config.productName == 0 ? "Midi Device" : config.productName);
     USB.manufacturerName(config.manufacturerName == 0 ? "SynthHead" : config.manufacturerName);
-
+    
     if (config.productDescription != 0) {
-        tinyusb_add_string_descriptor(config.productDescription);
+        nameIndex = tinyusb_add_string_descriptor(config.productDescription);
     } else {
-        tinyusb_add_string_descriptor("Midi Device Description");
+        nameIndex = tinyusb_add_string_descriptor("Midi Device Description");
+    }
+
+    nameIndex++;
+    for (uint8_t i = 0; i < cableCount; i++) {
+        tinyusb_add_string_descriptor(cableNames[i]);
     }
 
     tinyusb_enable_interface(USB_INTERFACE_MIDI, calculateDescriptorLength(), descriptorCallback);
@@ -145,4 +151,5 @@ MidiDevice MidiDevice::instance = MidiDevice();
 
 bool MidiDevice::_available = false;
 uint8_t MidiDevice::cableCount = 0;
+uint8_t MidiDevice::nameIndex = 0;
 const char* MidiDevice::cableNames[MAX_CABLE_COUNT] = { 0 };
