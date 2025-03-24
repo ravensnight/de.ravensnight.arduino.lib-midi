@@ -5,9 +5,16 @@
 using namespace MIDI;
 using namespace LOGGING;
 
-MidiReader::MidiReader(Stream* mio, MidiCallback* cb) {    
-    _midiCallback = cb;
+MidiReader::MidiReader(Stream* mio) {        
     _stream = mio;
+}
+
+void MidiReader::enableSysex(SysexHandler* handler) {
+    _sysexHandler = handler;
+}
+
+void MidiReader::enableVoice(VoiceCallback* cb) {
+    _voiceCallback = cb;
 }
 
 uint8_t MidiReader::payloadSize(MessageType type) {
@@ -66,56 +73,56 @@ void MidiReader::parse() {
 
             switch (_command) {
             case MessageType::NoteOn:
-                _midiCallback->onNoteOn(_channel, msg.value1, msg.value2);
+                run_if_notnull(_voiceCallback, onNoteOn(_channel, msg.value1, msg.value2));
                 break;
 
             case MessageType::NoteOff:
-                _midiCallback->onNoteOff(_channel, msg.value1, msg.value2);
+                run_if_notnull(_voiceCallback, onNoteOff(_channel, msg.value1, msg.value2));
                 break;
 
             case MessageType::Aftertouch:
-                _midiCallback->onAftertouch(_channel, msg.value1, msg.value2);
+                run_if_notnull(_voiceCallback, onAftertouch(_channel, msg.value1, msg.value2));
                 break;
 
             case MessageType::ControlChange:
-                _midiCallback->onControlChange(_channel, msg.value1, msg.value2);
+                run_if_notnull(_voiceCallback, onControlChange(_channel, msg.value1, msg.value2));
                 break;
 
             case MessageType::ProgramChange:
-                _midiCallback->onProgramSelect(_channel, msg.value1);
+                run_if_notnull(_voiceCallback, onProgramSelect(_channel, msg.value1));
                 break;
 
             case MessageType::ChannelPressure:
-                _midiCallback->onChannelPressure(_channel, msg.value1);
+                run_if_notnull(_voiceCallback, onChannelPressure(_channel, msg.value1));
                 break;
 
             case MessageType::ModulationWheel:
-                _midiCallback->onModulationWheel(_channel, __14bit(msg.value2, msg.value1));
+                run_if_notnull(_voiceCallback, onModulationWheel(_channel, __14bit(msg.value2, msg.value1)));
                 break;
 
             case MessageType::SongPos:                
-                _midiCallback->onSongPos(__14bit(msg.value2, msg.value1));
+                run_if_notnull(_voiceCallback, onSongPos(__14bit(msg.value2, msg.value1)));
                 break;
 
             case MessageType::SongSel:
-                _midiCallback->onSongSel(msg.value1);
+                run_if_notnull(_voiceCallback, onSongSel(msg.value1));
                 break;
             
             case MessageType::MidiStart:
-                _midiCallback->onMidiStart();
+                run_if_notnull(_voiceCallback, onMidiStart());
                 break;
 
             case MessageType::MidiStop:
-                _midiCallback->onMidiStop();
+                run_if_notnull(_voiceCallback, onMidiStop());
                 break;
 
             case MessageType::MidiContinue:
-                _midiCallback->onMidiContinue();
+                run_if_notnull(_voiceCallback, onMidiContinue());
                 break;
 
             case MessageType::SysExStart:
                 Logger::instance.debug("Received SysEx for Manufacturer: %x", msg.value1);
-                _midiCallback->onSysEx(msg.value1, this);
+                run_if_notnull(_sysexHandler, onSysEx(msg.value1, this));
                 break;
 
             case MessageType::SysExEnd:

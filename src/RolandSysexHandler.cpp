@@ -1,17 +1,43 @@
-#include <midi/RolandSysex.h>
+
+#include <midi/RolandSysexTypes.h>
+#include <midi/RolandSysexHandler.h>
 #include <Logger.h>
 
 using namespace MIDI;
 using namespace LOGGING;
 
-void RolandSysex::checksumAdd(int& checksum, uint8_t val) {
+RolandSysexHandler::RolandSysexHandler(RolandSysexCallback* cb, MidiWriter* writer) {
+    _callback = cb;
+    _writer = writer;
+}
+
+void RolandSysexHandler::checksumAdd(int& checksum, uint8_t val) {
     checksum += val;
     if (checksum > 127) {
         checksum -= 128;
     }
 }
 
-uint8_t RolandSysex::checksum(RolandAddr& addr, uint8_t bytes[], uint16_t len) {
+void RolandSysexHandler::onSysEx(uint8_t manufacturer, MidiReader* reader) {
+    
+    uint8_t buffer[6];
+    uint8_t len;
+
+    // check for roland message format
+    if (manufacturer != 0x41) {
+        Logger::instance.debug("Manufacturer ID is not of type Roland: 0x%x. Skip whole SysEx message", manufacturer);
+        reader->skipSysEx();
+        return;
+    }
+
+    if (readSysEx(reader, _writer, _callback) < 0) {
+        Logger::instance.error("Failed to parse Roland SysEx message.");
+        reader->skipSysEx();
+    }
+}
+
+
+uint8_t RolandSysexHandler::checksum(RolandAddr& addr, uint8_t bytes[], uint16_t len) {
     int res = 0;
 
     checksumAdd(res, addr.hsb);    
@@ -26,7 +52,7 @@ uint8_t RolandSysex::checksum(RolandAddr& addr, uint8_t bytes[], uint16_t len) {
     return res == 128 ? 0 : res;
 }
 
-int RolandSysex::readSysEx(MidiReader* r, MidiWriter* w, RolandSysexCallback* cb) {
+int RolandSysexHandler::readSysEx(MidiReader* r, MidiWriter* w, RolandSysexCallback* cb) {
 
     RolandSysexHdr hdr;
     RecordInfo recordInfo;
@@ -75,7 +101,7 @@ int RolandSysex::readSysEx(MidiReader* r, MidiWriter* w, RolandSysexCallback* cb
         }
 
         // check checksum
-        checksum = RolandSysex::checksum(hdr.addr, buffer, 3);    // calculate checksum from hdr + length (3 bytes from buffer)        
+        checksum = RolandSysexHandler::checksum(hdr.addr, buffer, 3);    // calculate checksum from hdr + length (3 bytes from buffer)        
         delete buffer; // delete buffer, as this one is no longer needed.
         if (checksum != buffer[3]) {
             Logger::instance.warn("Roland:Sysex:Read - Calculated checksum does not match received: %x, calculated: %x", buffer[3], checksum);            
@@ -113,7 +139,7 @@ int RolandSysex::readSysEx(MidiReader* r, MidiWriter* w, RolandSysexCallback* cb
             cb->read(recordInfo.addr, (buffer + ROLAND_SYSEX_HDR_SIZE), recordInfo.size); 
 
             // create checksum and add to buffer
-            checksum = RolandSysex::checksum(recordInfo.addr, (buffer + ROLAND_SYSEX_HDR_SIZE), recordInfo.size);
+            checksum = RolandSysexHandler::checksum(recordInfo.addr, (buffer + ROLAND_SYSEX_HDR_SIZE), recordInfo.size);
             memcpy((buffer + ROLAND_SYSEX_HDR_SIZE + recordInfo.size), &checksum, 1);
 
             Logger::instance.debug("Roland:Sysex:Read - Send sysex checksum:%x len:%d.", checksum, bufsize);
@@ -148,7 +174,7 @@ int RolandSysex::readSysEx(MidiReader* r, MidiWriter* w, RolandSysexCallback* cb
             return -1;
         }
 
-        checksum = RolandSysex::checksum(hdr.addr, buffer, recordInfo.size);
+        checksum = RolandSysexHandler::checksum(hdr.addr, buffer, recordInfo.size);
         if (checksum != buffer[recordInfo.size]) {
             Logger::instance.warn("Roland:Sysex:Write - Calculated checksum does not match received: %x, calculated: %x", buffer[recordInfo.size], checksum);
             delete buffer;

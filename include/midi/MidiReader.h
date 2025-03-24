@@ -4,33 +4,14 @@
 #include <Arduino.h>
 #include <Stream.h>
 #include <midi/MidiDevice.h>
+#include <midi/VoiceCallback.h>
+#include <midi/SysexHandler.h>
 
 #define MIDI_INPUT_SYSEXEND 0xF7
 #define MIDI_INPUT_EOF -1
+#define run_if_notnull(ptr, fn) if (ptr != 0) ptr->fn;
 
 namespace MIDI {
-
-    class MidiReader;
-
-    class MidiCallback {
-
-        public:
-
-            virtual void onNoteOn(uint8_t chn, uint8_t pitch, uint8_t velocity) = 0;
-            virtual void onNoteOff(uint8_t chn, uint8_t pitch, uint8_t velocity) = 0;
-            virtual void onAftertouch(uint8_t chn, uint8_t pitch, uint8_t pressure) = 0;
-            virtual void onControlChange(uint8_t chn, uint8_t control, uint8_t value) = 0;
-            virtual void onProgramSelect(uint8_t chn, uint8_t prognum) = 0;
-            virtual void onChannelPressure(uint8_t chn, uint8_t pressure) = 0;
-            virtual void onModulationWheel(uint8_t chn, uint16_t pitchValue) = 0;
-            virtual void onSongPos(uint16_t pos) = 0;
-            virtual void onSongSel(uint8_t songNum) = 0;
-            virtual void onMidiStart() = 0;
-            virtual void onMidiStop() = 0;
-            virtual void onMidiContinue() = 0;
-            virtual void onSysEx(uint8_t manufacturer, MidiReader* reader) = 0;
-
-    };
 
     enum class ReaderState : uint8_t {
         WaitStart   = 0x00,
@@ -40,8 +21,10 @@ namespace MIDI {
     class MidiReader {
 
         private:
-            MidiCallback* _midiCallback = 0;
             Stream* _stream;
+
+            VoiceCallback* _voiceCallback = 0;
+            SysexHandler* _sysexHandler = 0;
 
             ReaderState _state = ReaderState::WaitStart;
             MessageType _command = MessageType::Reset;    // undefined command
@@ -54,7 +37,10 @@ namespace MIDI {
 
         public:
 
-            MidiReader(Stream* stream, MidiCallback* callback);
+            MidiReader(Stream* stream);
+
+            void enableVoice(VoiceCallback* cb);
+            void enableSysex(SysexHandler* handler);
 
             /**
              * Scan the input stream and trigger the callback.
