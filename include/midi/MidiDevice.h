@@ -3,14 +3,19 @@
 
 #include <Arduino.h>
 #include <Stream.h>
-
 #include <esp32-hal-tinyusb.h>
 #include <USB.h>
+
+#include <midi/Pipe.h>
 
 namespace MIDI {
 
 #ifndef MAX_CABLE_COUNT
     #define MAX_CABLE_COUNT 3
+#endif
+
+#ifndef MIDI_PIPE_LEN
+    #define MIDI_PIPE_LEN 64
 #endif
 
 #define __14bit(hsb, lsb)   ((uint16_t)((hsb & 0x7F) << 7) | (lsb & 0x7F))
@@ -23,6 +28,27 @@ typedef struct _MidiMsg {
     uint8_t value1;
     uint8_t value2;
 } MidiMsg;
+
+enum class CINType : uint8_t {
+
+    Misc = 0x00,
+    CableEvent = 0x01,
+    Common2Byte = 0x02,
+    Common3Byte = 0x03,
+    SysexStart = 0x04,
+    SysexEnd1 = 0x05,
+    SysexEnd2 = 0x06,
+    SysexEnd3 = 0x07,
+    NoteOff = 0x08,
+    NoteOn = 0x09,
+    PolyKey = 0x0A,
+    ControlChange = 0x0B,
+    ProgramChange = 0x0C,
+    ChannelPressure = 0x0D,
+    ModulationWheel = 0x0E,
+    SingleByte = 0x0F
+
+};
 
 enum class MessageType : uint8_t {
 
@@ -63,6 +89,11 @@ typedef struct {
     const char* serial;
 } USBConfig;
 
+typedef struct{
+    const char* name;
+    Pipe* pipe;
+} CableDef ;
+
 class MidiDevice {
 
     private:
@@ -70,7 +101,7 @@ class MidiDevice {
         static bool _available;
         static uint8_t cableCount;
         static uint8_t nameIndex;
-        static const char* cableNames[MAX_CABLE_COUNT];
+        static CableDef cables[MAX_CABLE_COUNT];
 
         static void usbCallback(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data);
         static uint16_t descriptorCallback(uint8_t * dst, uint8_t * itf);
@@ -80,6 +111,9 @@ class MidiDevice {
         // calculate the descriptor length
         static uint16_t calculateDescriptorLength();
 
+        // get the size of bytes to read as defined in MIDI spec
+        static uint8_t getPacketLen(CINType tp);
+        
     public:
 
         static MidiDevice instance;
@@ -92,6 +126,12 @@ class MidiDevice {
 
         // check, if midi device is available.
         bool available();
+
+        // read midi input buffer(s)
+        void readInput();
+
+        // provide the input pipe to read from.
+        Pipe* getInPipe(uint8_t cable);
 };
 
 }

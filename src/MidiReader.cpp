@@ -64,12 +64,18 @@ void MidiReader::parse() {
             _command = (MessageType)msg.status;
         }
 
+        Logger::instance.debug("Read command is: %x", _command);
         _state = ReaderState::WaitPayload;
     }
     else if (_state == ReaderState::WaitPayload) {
         
         len = payloadSize(_command);
+        Logger::instance.debug("Try to read payload for command %x, len: %d", _command, len);
+
         if (_stream->readBytes(__buffer(&msg + 1), len) == len) {
+            
+            Logger::instance.debug("Read payload for command %x, len: %d", _command, len);
+            Logger::instance.dump("Command incl. payload: ", (uint8_t*)&msg, len + 1, len + 1);
 
             switch (_command) {
             case MessageType::NoteOn:

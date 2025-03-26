@@ -8,11 +8,11 @@ namespace MIDI {
     class MidiStream : public Stream {
 
         private:
-            uint8_t cable, intf;
+            uint8_t cable;
 
         public:
 
-            MidiStream(uint8_t intf, uint8_t cable);
+            MidiStream(uint8_t cable);
 
             int available();
             int read();

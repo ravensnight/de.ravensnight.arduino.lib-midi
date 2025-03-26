@@ -5,9 +5,8 @@
 using namespace LOGGING;
 using namespace MIDI;
 
-MidiStream::MidiStream(uint8_t intf, uint8_t cable) {
+MidiStream::MidiStream(uint8_t cable) {
     this->cable = cable;
-    this->intf = intf;
 }
 
 int MidiStream::peek() {
@@ -15,21 +14,24 @@ int MidiStream::peek() {
 }
 
 int MidiStream::available() {
-    return tud_midi_n_available(this->intf, this->cable);
+
+    Pipe* pipe = MidiDevice::instance.getInPipe(this->cable);
+    if (pipe == 0) return 0;
+
+    return pipe->available();
 }
 
 int MidiStream::read() {
-    
-    uint8_t buf[1];
-    size_t len;
+    Pipe* pipe = MidiDevice::instance.getInPipe(this->cable);
+    if (pipe == 0) return -1;
 
-    if (available() > 0) {
-        len = tud_midi_n_stream_read(this->intf, this->cable, buf, 1);        
-        if (len == 1) {
-            return buf[0];
-        }
+    if (pipe->available() > 0) {        
+        int res = pipe->read();
+
+        // Logger::instance.debug("Read from cable pipe %d: %04x", this->cable, res);
+        return res;
     }
-
+    
     return -1;
 }
 
@@ -41,7 +43,7 @@ size_t MidiStream::write(uint8_t b) {
         return 0;
     }
 
-    return tud_midi_n_stream_write(this->intf, this->cable, buf, 1);    
+    return tud_midi_n_stream_write(0, this->cable, buf, 1);    
 }
 
 size_t MidiStream::write(const uint8_t *buf, size_t size) {
@@ -53,7 +55,7 @@ size_t MidiStream::write(const uint8_t *buf, size_t size) {
     }
     
     do {
-        len += tud_midi_n_stream_write(this->intf, this->cable, buf + len, size - len);
+        len += tud_midi_n_stream_write(0, this->cable, buf + len, size - len);
         Logger::instance.debug("Stream::write - write buffer of size: %d, sent: %d", size, len);
     } while (len < size);
 

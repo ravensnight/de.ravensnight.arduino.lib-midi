@@ -5,8 +5,8 @@
 using namespace MIDI;
 using namespace LOGGING;
 
-#ifndef MIDI_ENDPOINT_COUNT 
-    #define MIDI_ENDPOINT_COUNT 1
+#ifndef MIDI_ENDPOINT_NUMBER 
+    #define MIDI_ENDPOINT_NUMBER 1
 #endif
 
 ESP_EVENT_DEFINE_BASE(USB_MIDI_EVENTS);
@@ -72,7 +72,7 @@ uint16_t MidiDevice::descriptorCallback(uint8_t * dst, uint8_t * itf) {
     }
     
     // add inbound endpoint descriptors
-    uint8_t desc1[] = { TUD_MIDI_DESC_EP(MIDI_ENDPOINT_COUNT, 64, cableCount) };
+    uint8_t desc1[] = { TUD_MIDI_DESC_EP(MIDI_ENDPOINT_NUMBER, 64, cableCount) };
     memcpy(dst + pos, desc1 , sizeof(desc1));
     pos += sizeof(desc1);
 
@@ -83,7 +83,7 @@ uint16_t MidiDevice::descriptorCallback(uint8_t * dst, uint8_t * itf) {
     }
 
     // add outbound endpoint descriptors
-    uint8_t desc2[] = { TUD_MIDI_DESC_EP(0x80 | MIDI_ENDPOINT_COUNT, 64, cableCount) };
+    uint8_t desc2[] = { TUD_MIDI_DESC_EP(0x80 | MIDI_ENDPOINT_NUMBER, 64, cableCount) };
     memcpy(dst + pos, desc2 , sizeof(desc2));
     pos += sizeof(desc2);
 
@@ -99,7 +99,8 @@ uint16_t MidiDevice::descriptorCallback(uint8_t * dst, uint8_t * itf) {
 
 int8_t MidiDevice::addCable(const char* name) {
     if (cableCount < MAX_CABLE_COUNT) {
-        cableNames[cableCount] = name;
+        
+        cables[cableCount] = { .name = name, .pipe = new Pipe(MIDI_PIPE_LEN) };
         cableCount++;
 
         return (cableCount - 1);
@@ -132,7 +133,7 @@ void MidiDevice::setup(const USBConfig& config) {
 
     nameIndex++;
     for (uint8_t i = 0; i < cableCount; i++) {
-        tinyusb_add_string_descriptor(cableNames[i]);
+        tinyusb_add_string_descriptor(cables[i].name);
     }
 
     tinyusb_enable_interface(USB_INTERFACE_MIDI, calculateDescriptorLength(), descriptorCallback);
@@ -147,9 +148,68 @@ bool MidiDevice::available() {
     return _available;
 }
 
+uint8_t MidiDevice::getPacketLen(CINType tp) {
+    switch (tp) {
+
+        case CINType::SysexEnd1: 
+        case CINType::SingleByte:
+            return 1;
+
+        case CINType::Common2Byte:
+        case CINType::SysexEnd2:
+        case CINType::ProgramChange:
+        case CINType::ChannelPressure:
+            return 2;
+
+        case CINType::Common3Byte:
+        case CINType::SysexStart:
+        case CINType::SysexEnd3: 
+        case CINType::NoteOff:
+        case CINType::NoteOn:
+        case CINType::PolyKey:
+        case CINType::ControlChange:
+        case CINType::ModulationWheel:
+            return 3;
+
+        default:
+            // CINType::Misc
+            // CINType::CableEvent
+            return 0;            
+    }
+}
+
+Pipe* MidiDevice::getInPipe(uint8_t cable) {
+    if (cable < cableCount) {
+        return cables[cable].pipe;
+    }
+
+    return 0;
+}
+
+void MidiDevice::readInput() {
+
+    uint8_t packet[4];
+    while (tud_midi_n_packet_read(0, packet)) {
+
+        uint8_t header = packet[0];
+        uint8_t cable = (header >> 4);
+        // Logger::instance.debug("Received midi packet for pipe %d", cable);
+
+        if (cable < cableCount) {
+            uint8_t len = getPacketLen((CINType)(0x0F & header));
+
+            cables[cable].pipe->add((packet + 1), len);
+            // Logger::instance.dump("Stored midi packet: ", (packet + 1), len, len);
+        }
+
+    }
+
+}
+
 MidiDevice MidiDevice::instance = MidiDevice();
 
+// static initializers
 bool MidiDevice::_available = false;
 uint8_t MidiDevice::cableCount = 0;
 uint8_t MidiDevice::nameIndex = 0;
-const char* MidiDevice::cableNames[MAX_CABLE_COUNT] = { 0 };
+CableDef MidiDevice::cables[MAX_CABLE_COUNT];
