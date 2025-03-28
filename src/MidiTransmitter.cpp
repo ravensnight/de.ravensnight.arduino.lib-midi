@@ -1,23 +1,32 @@
 #include <esp32-hal-tinyusb.h>
 #include <midi/MidiDevice.h>
-#include <midi/MidiWriter.h>
+#include <midi/MidiTransmitter.h>
 #include <Logger.h>
 
 using namespace MIDI;
 using namespace LOGGING;
 
-MidiWriter::MidiWriter(Stream* out) {  
-    _stream = out;
+MidiTransmitter::MidiTransmitter(uint8_t cable) {  
+    _cable = cable;
 }
 
-void MidiWriter::send(MessageType msg, uint8_t channel, uint16_t value) {
-    uint8_t lsb = __lsb(value);
-    uint8_t hsb = __hsb(value);
+size_t MidiTransmitter::write(const uint8_t *buf, size_t size) {
+    int len = 0;
 
-    send(msg, channel, lsb, hsb);
+    if (!MidiDevice::instance.available()) {
+        Logger::instance.debug("Do not write to midi out, since USB is not available.");
+        return 0;
+    }
+    
+    do {
+        len += tud_midi_n_stream_write(0, this->_cable, buf + len, size - len);
+        Logger::instance.debug("Stream::write - write buffer of size: %d, sent: %d", size, len);
+    } while (len < size);
+
+    return len;
 }
 
-void MidiWriter::send(MessageType type, uint8_t channel, uint8_t val1, uint8_t val2) {
+void MidiTransmitter::send(MessageType type, uint8_t channel, uint8_t val1, uint8_t val2) {
 
     MidiMsg msg;
     uint8_t t = (uint8_t)type;
@@ -32,19 +41,19 @@ void MidiWriter::send(MessageType type, uint8_t channel, uint8_t val1, uint8_t v
         case MessageType::ControlChange:
         case MessageType::ModulationWheel:
         case MessageType::SongPos:
-            _stream->write(__buffer(&msg), 3);
+            write(__buffer(&msg), 3);
             break;
 
         case MessageType::ProgramChange:
         case MessageType::ChannelPressure:
         case MessageType::SongSel:
-            _stream->write(__buffer(&msg), 2);
+            write(__buffer(&msg), 2);
             break;
         
         case MessageType::MidiStart:
         case MessageType::MidiStop:
         case MessageType::MidiContinue:
-            _stream->write(__buffer(&msg), 1);
+            write(__buffer(&msg), 1);
             break;
 
         default:
@@ -52,61 +61,68 @@ void MidiWriter::send(MessageType type, uint8_t channel, uint8_t val1, uint8_t v
     }
 }
 
+void MidiTransmitter::send(MessageType msg, uint8_t channel, uint16_t value) {
+    uint8_t lsb = __lsb(value);
+    uint8_t hsb = __hsb(value);
+
+    send(msg, channel, lsb, hsb);
+}
+
 // ----------------------------------------------------------------------------
 // voice messages
 // ----------------------------------------------------------------------------
-void MidiWriter::sendNoteOn(uint8_t chn, uint8_t pitch, uint8_t velocity) {
+void MidiTransmitter::sendNoteOn(uint8_t chn, uint8_t pitch, uint8_t velocity) {
     send(MessageType::NoteOn, chn, pitch, velocity);
 }
 
-void MidiWriter::sendNoteOff(uint8_t chn, uint8_t pitch, uint8_t velocity) {
+void MidiTransmitter::sendNoteOff(uint8_t chn, uint8_t pitch, uint8_t velocity) {
     send(MessageType::NoteOff, chn, pitch, velocity);
 }
 
-void MidiWriter::sendAftertouch(uint8_t chn, uint8_t pitch, uint8_t pressure) {
+void MidiTransmitter::sendAftertouch(uint8_t chn, uint8_t pitch, uint8_t pressure) {
     send(MessageType::Aftertouch, chn, pitch, pressure);
 }
 
-void MidiWriter::sendControlChange(uint8_t chn, uint8_t controller, uint8_t value) {
+void MidiTransmitter::sendControlChange(uint8_t chn, uint8_t controller, uint8_t value) {
     send(MessageType::ControlChange, chn, controller, value);
 }
 
-void MidiWriter::sendProgramSelect(uint8_t chn, uint8_t prognum) {
+void MidiTransmitter::sendProgramSelect(uint8_t chn, uint8_t prognum) {
     send(MessageType::ProgramChange, chn, prognum, 0);
 }
 
-void MidiWriter::sendChannelPressure(uint8_t chn, uint8_t pressure) {
+void MidiTransmitter::sendChannelPressure(uint8_t chn, uint8_t pressure) {
     send(MessageType::ChannelPressure, chn, pressure, 0);
 }
 
-void MidiWriter::sendModulationWheel(uint8_t chn, int16_t pitchValue) {
+void MidiTransmitter::sendModulationWheel(uint8_t chn, int16_t pitchValue) {
     send(MessageType::ModulationWheel, chn, pitchValue);
 }
 
 // ----------------------------------------------------------------------------
 // system messages
 // ----------------------------------------------------------------------------
-void MidiWriter::sendSongPos(int16_t position) {
+void MidiTransmitter::sendSongPos(int16_t position) {
     send(MessageType::SongPos, 0, position);
 }
 
-void MidiWriter::sendSongSel(int8_t songnum) {
+void MidiTransmitter::sendSongSel(int8_t songnum) {
     send(MessageType::SongSel, 0, songnum, 0);
 }   
 
-void MidiWriter::sendMidiStart() {
+void MidiTransmitter::sendMidiStart() {
     send(MessageType::MidiStart, 0, 0, 0);
 }
 
-void MidiWriter::sendMidiStop() {
+void MidiTransmitter::sendMidiStop() {
     send(MessageType::MidiStop, 0, 0, 0);
 }
 
-void MidiWriter::sendMidiContinue() {
+void MidiTransmitter::sendMidiContinue() {
     send(MessageType::MidiContinue, 0, 0, 0);
 }
 
-void MidiWriter::sendSysEx(uint8_t channel, uint8_t payload[], uint16_t len) {
+void MidiTransmitter::sendSysEx(uint8_t channel, uint8_t payload[], uint16_t len) {
     uint16_t size = len + 3;
     uint8_t buffer[size];
     
@@ -116,5 +132,5 @@ void MidiWriter::sendSysEx(uint8_t channel, uint8_t payload[], uint16_t len) {
     buffer[len + 2] = (uint8_t)MessageType::SysExEnd;
     
     Logger::instance.dump("Send SysEx bytes: ", buffer, size, 0);
-    _stream->write(buffer, size);    
+    write(buffer, size);    
 }

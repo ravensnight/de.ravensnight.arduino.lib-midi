@@ -6,9 +6,9 @@
 using namespace MIDI;
 using namespace LOGGING;
 
-RolandSysexHandler::RolandSysexHandler(RolandSysexCallback* cb, MidiWriter* writer) {
-    _callback = cb;
-    _writer = writer;
+RolandSysexHandler::RolandSysexHandler(RolandSysexCallback* cb, MidiTransmitter* writer) {
+    _cb = cb;
+    _out = writer;
 }
 
 void RolandSysexHandler::checksumAdd(int& checksum, uint8_t val) {
@@ -18,21 +18,26 @@ void RolandSysexHandler::checksumAdd(int& checksum, uint8_t val) {
     }
 }
 
-void RolandSysexHandler::onSysEx(uint8_t manufacturer, MidiReader* reader) {
+void RolandSysexHandler::onSysEx(Stream* inputStream) {
     
     uint8_t buffer[6];
     uint8_t len;
 
-    // check for roland message format
-    if (manufacturer != 0x41) {
-        Logger::instance.debug("Manufacturer ID is not of type Roland: 0x%x. Skip whole SysEx message", manufacturer);
-        reader->skipSysEx();
+    uint8_t start[2];
+    len = inputStream->readBytes(start, 2);
+    if (len < 2) {
+        Logger::instance.error("Input stream did not provide the first two bytes of sysex stream.");
         return;
     }
 
-    if (readSysEx(reader, _writer, _callback) < 0) {
+    // check for roland message format at position 2 
+    if (start[1] != 0x41) {
+        Logger::instance.debug("Manufacturer ID is not of type Roland: 0x%x. Skip whole SysEx message", start[1]);
+        return;
+    }
+
+    if (readSysEx(inputStream, _out, _cb) < 0) {
         Logger::instance.error("Failed to parse Roland SysEx message.");
-        reader->skipSysEx();
     }
 }
 
@@ -52,7 +57,7 @@ uint8_t RolandSysexHandler::checksum(RolandAddr& addr, uint8_t bytes[], uint16_t
     return res == 128 ? 0 : res;
 }
 
-int RolandSysexHandler::readSysEx(MidiReader* r, MidiWriter* w, RolandSysexCallback* cb) {
+int RolandSysexHandler::readSysEx(Stream* inputStream, MidiTransmitter* w, RolandSysexCallback* cb) {
 
     RolandSysexHdr hdr;
     RecordInfo recordInfo;
@@ -63,7 +68,7 @@ int RolandSysexHandler::readSysEx(MidiReader* r, MidiWriter* w, RolandSysexCallb
     size_t len, bufsize;
 
     Logger::instance.debug("Roland:Sysex - Read Header.");
-    len = r->readSysEx(__buffer(&hdr), ROLAND_SYSEX_HDR_SIZE);
+    len = inputStream->readBytes(__buffer(&hdr), ROLAND_SYSEX_HDR_SIZE);
 
     if (len < ROLAND_SYSEX_HDR_SIZE) {
         Logger::instance.warn("Roland:Sysex - Header could not be read (received %d bytes). Stop.", len);
@@ -87,7 +92,7 @@ int RolandSysexHandler::readSysEx(MidiReader* r, MidiWriter* w, RolandSysexCallb
         Logger::instance.debug("Roland:Sysex:Read - Parse pull request.");
 
         buffer = new uint8_t[4]; // for reading the size to be sent outside.
-        if (r->readSysEx(buffer, 4) < 4) {
+        if (inputStream->readBytes(buffer, 4) < 4) {
             Logger::instance.warn("Roland:Sysex:Read - Did not receive next 4 bytes. Stop here.");
             delete buffer;
             return -1;
@@ -167,7 +172,7 @@ int RolandSysexHandler::readSysEx(MidiReader* r, MidiWriter* w, RolandSysexCallb
         bufsize = recordInfo.size + 1;      // add checksum byte
         buffer = new uint8_t[bufsize];      // buffer is size + 1 byte for checksum
 
-        len = r->readSysEx(buffer, bufsize);       // read buffer incl. checksum
+        len = inputStream->readBytes(buffer, bufsize);       // read buffer incl. checksum
         if (len < bufsize) {
             Logger::instance.warn("Could not read the sysex buffer of size %d. Received %d instead. Stop.", bufsize, len);
             delete buffer;

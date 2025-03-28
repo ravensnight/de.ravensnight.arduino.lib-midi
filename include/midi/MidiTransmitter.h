@@ -7,15 +7,18 @@
 
 namespace MIDI {
 
-    class MidiWriter {
+    class MidiTransmitter {
 
         private:
-            Stream* _stream;
+            uint8_t _cable;
+
+            // write binary data to midi out for the cable configured.
+            size_t write(const uint8_t *buf, size_t size);
 
         public:
 
         // constructors
-        MidiWriter(Stream* out);
+        MidiTransmitter(uint8_t cable);
 
         // generic midi send function
         void send(MessageType msg, uint8_t channel, uint16_t value);

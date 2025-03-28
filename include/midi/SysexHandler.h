@@ -2,17 +2,15 @@
 #define __SYSEX_HANDLER_H__
 
 #include <Arduino.h>
+#include <midi/ArrayInputStream.h>
 
 namespace MIDI {
-
-    // predeclare MidiReader*
-    class MidiReader;
 
     // Sysex Handler declaration
     class SysexHandler {
 
         public:
-            virtual void onSysEx(uint8_t manufacturer, MidiReader* reader) = 0;
+            virtual void onSysEx(Stream* inputStream) = 0;
 
     };
 

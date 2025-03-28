@@ -97,10 +97,10 @@ uint16_t MidiDevice::descriptorCallback(uint8_t * dst, uint8_t * itf) {
     return len;
 }
 
-int8_t MidiDevice::addCable(const char* name) {
+int8_t MidiDevice::attach(const char* name, MidiReceiver* receiver) {
     if (cableCount < MAX_CABLE_COUNT) {
         
-        cables[cableCount] = { .name = name, .pipe = new Pipe(MIDI_PIPE_LEN) };
+        cables[cableCount] = { .name = name, .receiver = receiver };
         cableCount++;
 
         return (cableCount - 1);
@@ -178,28 +178,21 @@ uint8_t MidiDevice::getPacketLen(CINType tp) {
     }
 }
 
-Pipe* MidiDevice::getInPipe(uint8_t cable) {
-    if (cable < cableCount) {
-        return cables[cable].pipe;
-    }
-
-    return 0;
-}
-
 void MidiDevice::readInput() {
 
     uint8_t packet[4];
+
     while (tud_midi_n_packet_read(0, packet)) {
 
         uint8_t header = packet[0];
         uint8_t cable = (header >> 4);
         // Logger::instance.debug("Received midi packet for pipe %d", cable);
 
-        if (cable < cableCount) {
-            uint8_t len = getPacketLen((CINType)(0x0F & header));
+        CINType type = (CINType)(0x0F & header);
 
-            cables[cable].pipe->add((packet + 1), len);
-            // Logger::instance.dump("Stored midi packet: ", (packet + 1), len, len);
+        if (cable < cableCount) {
+            uint8_t len = getPacketLen(type);
+            cables[cable].receiver->handle(type, (packet+1), len);
         }
 
     }
