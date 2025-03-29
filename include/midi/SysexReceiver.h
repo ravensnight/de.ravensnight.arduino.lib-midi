@@ -22,12 +22,14 @@ namespace MIDI {
 
             SysexHandler* _handler;
 
+            bool append(const uint8_t* msg, size_t len);
+
         public:
 
             SysexReceiver(size_t bufferSize, SysexHandler* handler);
             ~SysexReceiver();
 
-            void handle(CINType type, const uint8_t* buf, uint8_t len);
+            void handle(CINType type, const uint8_t* msg, size_t len);
             void reset();
     };
 

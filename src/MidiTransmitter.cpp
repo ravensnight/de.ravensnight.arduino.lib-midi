@@ -10,6 +10,9 @@ MidiTransmitter::MidiTransmitter(uint8_t cable) {
     _cable = cable;
 }
 
+MidiTransmitter::~MidiTransmitter() {    
+}
+
 size_t MidiTransmitter::write(const uint8_t *buf, size_t size) {
     int len = 0;
 

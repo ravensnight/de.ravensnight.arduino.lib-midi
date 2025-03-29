@@ -17,8 +17,9 @@ namespace MIDI {
         public:
 
             VoiceReceiver(VoiceCallback* cb);
+            ~VoiceReceiver();
 
-            void handle(CINType type, const uint8_t*, uint8_t len);
+            void handle(CINType type, const uint8_t* msg, size_t len);
     };
 
 }

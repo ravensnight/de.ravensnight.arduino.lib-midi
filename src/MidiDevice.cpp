@@ -11,7 +11,17 @@ using namespace LOGGING;
 
 ESP_EVENT_DEFINE_BASE(USB_MIDI_EVENTS);
 
-MidiDevice::MidiDevice() {    
+MidiDevice::MidiDevice() {        
+}
+
+MidiDevice::~MidiDevice() {        
+    _available = false;
+    cableCount = 0;
+    nameIndex = 0;
+
+    for (int i = 0; i < MAX_CABLE_COUNT; i++) {
+        cables[0] = 0;
+    }
 }
 
 void MidiDevice::usbCallback(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data) {
@@ -98,9 +108,13 @@ uint16_t MidiDevice::descriptorCallback(uint8_t * dst, uint8_t * itf) {
 }
 
 int8_t MidiDevice::attach(const char* name, MidiReceiver* receiver) {
-    if (cableCount < MAX_CABLE_COUNT) {
-        
-        cables[cableCount] = { .name = name, .receiver = receiver };
+    if (cableCount < MAX_CABLE_COUNT) {        
+
+        CableDef* d = new CableDef();
+        d->name = name;
+        d->receiver = receiver;
+
+        cables[cableCount] = d;
         cableCount++;
 
         return (cableCount - 1);
@@ -133,7 +147,7 @@ void MidiDevice::setup(const USBConfig& config) {
 
     nameIndex++;
     for (uint8_t i = 0; i < cableCount; i++) {
-        tinyusb_add_string_descriptor(cables[i].name);
+        tinyusb_add_string_descriptor(cables[i]->name);
     }
 
     tinyusb_enable_interface(USB_INTERFACE_MIDI, calculateDescriptorLength(), descriptorCallback);
@@ -186,13 +200,15 @@ void MidiDevice::readInput() {
 
         uint8_t header = packet[0];
         uint8_t cable = (header >> 4);
-        // Logger::instance.debug("Received midi packet for pipe %d", cable);
+        Logger::instance.debug("Received midi packet for pipe %d, cin: %02x", cable, (header & 0x0F));
 
         CINType type = (CINType)(0x0F & header);
 
         if (cable < cableCount) {
             uint8_t len = getPacketLen(type);
-            cables[cable].receiver->handle(type, (packet+1), len);
+
+            Logger::instance.debug("Midi packet size: %d", len);
+            cables[cable]->receiver->handle(type, (packet + 1), len);
         }
 
     }
@@ -205,4 +221,4 @@ MidiDevice MidiDevice::instance = MidiDevice();
 bool MidiDevice::_available = false;
 uint8_t MidiDevice::cableCount = 0;
 uint8_t MidiDevice::nameIndex = 0;
-CableDef MidiDevice::cables[MAX_CABLE_COUNT];
+CableDef* MidiDevice::cables[MAX_CABLE_COUNT] = { 0 };

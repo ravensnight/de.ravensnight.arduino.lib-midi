@@ -1,5 +1,5 @@
 #include <midi/SysexReceiver.h>
-#include <midi/ArrayInputStream.h>
+#include <midi/ByteInputStream.h>
 #include <Logger.h>
 
 using namespace MIDI;
@@ -21,45 +21,101 @@ void SysexReceiver::reset() {
     _state = SysexState::WAITING;
 }
 
-void SysexReceiver::handle(CINType type, const uint8_t* buf, uint8_t len) {
+bool SysexReceiver::append(const uint8_t* msg, size_t len) {
 
-    if (len > (_bufferLen - _bufferPos)) {
-        Logger::instance.warn("Maximum sysex buffer length reached. Reset.");
+    if (_bufferPos + len > _bufferLen) {
+        Logger::instance.warn("SysexReceiver::handle - Buffer overrun. Reset.", len);
         reset();
-        return;
+        return false;
     }
 
+    memcpy((_buffer + _bufferPos), msg, len);
+    _bufferPos += len;
+
+    return true;
+}
+
+void SysexReceiver::handle(CINType type, const uint8_t* msg, size_t len) {
+
+    bool trigger = false;
+
     if (_state == SysexState::WAITING) {
-        if ((type == CINType::SysexStart) && (buf[0] == 0xF0)) {
-            memcpy(_buffer, buf, len);
-            _state = SysexState::READING;
-            _bufferPos = len;
+        if (len < 3) {
+            Logger::instance.warn("SysexReceiver::handle - Unexpected size %d (required 3). Return.", len);
+            reset();
+            return;    
+        }
+
+        if ((type == CINType::SysexStart) && (msg[0] == 0xF0)) {
+            if (append(msg, 3)) {
+                _state = SysexState::READING;
+            }
         }
     } else { // READING
 
         switch (type) {
             case CINType::SysexStart:    // continue normally
-                memcpy(_buffer, buf, len);
-                _bufferPos += len;
+            {
+                if (len < 3) {
+                    Logger::instance.warn("SysexReceiver::handle - Unexpected size %d (required 3). Return.", len);
+                    reset();
+                    return;    
+                }
+    
+                append(msg, 3);
+                trigger = false;
                 break;
+            }
 
             case CINType::SysexEnd1:    // continue normally
+            {
+                if (len < 1) {
+                    Logger::instance.warn("SysexReceiver::handle - Unexpected size %d (required 1). Return.", len);
+                    reset();
+                    return;    
+                }
+    
+                trigger = append(msg, 1);
+                break;
+            }
+
             case CINType::SysexEnd2:    // continue normally
+            {
+                if (len < 2) {
+                    Logger::instance.warn("SysexReceiver::handle - Unexpected size %d (required 2). Return.", len);
+                    reset();
+                    return;    
+                }
+    
+                trigger = append(msg, 2);
+                break;
+            }
+
             case CINType::SysexEnd3:    // continue normally
             {
-                memcpy(_buffer, buf, len);
-                _bufferPos += len;
-
-                ArrayInputStream* inputStream = new ArrayInputStream(_buffer, _bufferPos);                                
-                _handler->onSysEx(inputStream);
-                delete inputStream;
-                reset();
+                if (len < 3) {
+                    Logger::instance.warn("SysexReceiver::handle - Unexpected size %d (required 3). Return.", len);
+                    reset();
+                    return;    
+                }
+    
+                trigger = append(msg, 3);
                 break;
             }
 
             default:
                 reset();
                 break;
+        }
+
+        // trigger an action.
+        if (trigger) {
+            Logger::instance.dump("Midi message buffer is:", _buffer, _bufferPos, 0);
+
+            ByteInputStream* inputStream = new ByteInputStream(_buffer, _bufferPos);                           
+            _handler->onSysEx(inputStream);
+            delete inputStream;
+            reset();
         }
     }   
 }

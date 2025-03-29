@@ -30,7 +30,7 @@ typedef struct {
     const char* serial;
 } USBConfig;
 
-typedef struct{
+typedef struct {
     const char* name;
     MidiReceiver* receiver;
 } CableDef ;
@@ -42,12 +42,13 @@ class MidiDevice {
         static bool _available;
         static uint8_t cableCount;
         static uint8_t nameIndex;
-        static CableDef cables[MAX_CABLE_COUNT];
+        static CableDef* cables[MAX_CABLE_COUNT];
 
-        static void usbCallback(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data);
-        static uint16_t descriptorCallback(uint8_t * dst, uint8_t * itf);
+        static void usbCallback(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data);
+        static uint16_t descriptorCallback(uint8_t* dst, uint8_t * itf);
 
         MidiDevice();
+        ~MidiDevice();
 
         // calculate the descriptor length
         static uint16_t calculateDescriptorLength();

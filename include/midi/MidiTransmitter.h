@@ -19,6 +19,7 @@ namespace MIDI {
 
         // constructors
         MidiTransmitter(uint8_t cable);
+        ~MidiTransmitter();
 
         // generic midi send function
         void send(MessageType msg, uint8_t channel, uint16_t value);
@@ -52,7 +53,7 @@ namespace MIDI {
          * @param buffer holds the bytes to be sent
          * @param len informs about the number of bytes to read from buffer.
          */
-        void sendSysEx(uint8_t channel, uint8_t buffer[], uint16_t len);
+        void sendSysEx(uint8_t channel, uint8_t* buffer, uint16_t len);
     };
 
 }

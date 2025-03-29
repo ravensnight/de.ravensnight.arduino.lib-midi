@@ -8,6 +8,10 @@ VoiceReceiver::VoiceReceiver(VoiceCallback* cb) {
     _cb = cb;
 }
 
+VoiceReceiver::~VoiceReceiver() {
+    _cb = 0;
+}
+
 bool VoiceReceiver::accepted(CINType type) {
 
     switch (type) {
@@ -30,16 +34,18 @@ bool VoiceReceiver::accepted(CINType type) {
     }    
 }
 
-void VoiceReceiver::handle(CINType type, const uint8_t* buf, uint8_t len) {
+void VoiceReceiver::handle(CINType type, const uint8_t* buffer, size_t len) {
 
     if ((_cb == 0) || (!accepted(type))) return;
-
-    MidiMsg msg = { .status = 0x00, .value1 = 0x00, .value2 = 0x00 };
-    memcpy(&msg, buf, len);
 
     MessageType command = MessageType::Reset;
     uint8_t channel = 0;
     
+    MidiMsg msg = { .status = 0, .value1 = 0, .value2 = 0 };
+    size_t l = (len > 3) ? 3 : len;
+
+    memcpy(&msg, buffer, l);
+
     if (msg.status < 0xF0) {
         command = (MessageType)(msg.status & 0xF0);
         channel = (msg.status & 0x0F);

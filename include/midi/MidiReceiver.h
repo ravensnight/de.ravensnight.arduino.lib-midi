@@ -9,7 +9,7 @@ namespace MIDI {
     class MidiReceiver {
 
         public:
-            virtual void handle(CINType type, const uint8_t* buffer, uint8_t len) = 0;
+            virtual void handle(CINType type, const uint8_t* msg, size_t len) = 0;
     };
 
 }

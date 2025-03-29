@@ -12,27 +12,29 @@ namespace MIDI {
         public:
 
             RolandSysexHandler(RolandSysexCallback* cb, MidiTransmitter* out);
+            ~RolandSysexHandler();
 
             // implements function from SysexHandler
-            void onSysEx(Stream* inputStream);
+            void onSysEx(ByteInputStream* inputStream);
 
         private:
 
-            MidiTransmitter* _out = 0;
-            RolandSysexCallback* _cb = 0;
-
-            static void checksumAdd(int& previous, uint8_t value);
+            MidiTransmitter* _out;
+            RolandSysexCallback* _cb;
 
             /**
              * Parse a message from Midi In-Stream and potentially respond to writer.
              * Returns the number of bytes read or sent as payload or -1, if address was invalid or message could not be parsed correctly.
              */
-            static int readSysEx(Stream* inputStream, MidiTransmitter* out, RolandSysexCallback* cb);
+            int handleSysEx(ByteInputStream* inputStream);
+            int handleCmdRead(RolandSysexHdr& hdr, ByteInputStream* inputStream);
+            int handleCmdWrite(RolandSysexHdr& hdr, ByteInputStream* inputStream);
 
             /**
              * Calculate the checksum
              */
-            static uint8_t checksum(RolandAddr& addr, uint8_t bytes[], uint16_t len);
+            static uint8_t checksum(RolandAddr& addr, uint8_t* bytes, uint16_t len);
+            static void checksumAdd(int& previous, uint8_t value);
 
     };
 }
