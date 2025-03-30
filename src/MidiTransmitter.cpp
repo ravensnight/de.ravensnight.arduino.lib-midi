@@ -17,13 +17,13 @@ size_t MidiTransmitter::write(const uint8_t *buf, size_t size) {
     int len = 0;
 
     if (!MidiDevice::instance.available()) {
-        Logger::instance.debug("Do not write to midi out, since USB is not available.");
+        Logger::debug("Do not write to midi out, since USB is not available.");
         return 0;
     }
     
     do {
         len += tud_midi_n_stream_write(0, this->_cable, buf + len, size - len);
-        Logger::instance.debug("Stream::write - write buffer of size: %d, sent: %d", size, len);
+        Logger::debug("Stream::write - write buffer of size: %d, sent: %d", size, len);
     } while (len < size);
 
     return len;
@@ -134,6 +134,6 @@ void MidiTransmitter::sendSysEx(uint8_t channel, uint8_t payload[], uint16_t len
     memcpy(buffer + 2, payload, len);
     buffer[len + 2] = (uint8_t)MessageType::SysExEnd;
     
-    Logger::instance.dump("Send SysEx bytes: ", buffer, size, 0);
+    Logger::dump("Send SysEx bytes: ", buffer, size, 0);
     write(buffer, size);    
 }

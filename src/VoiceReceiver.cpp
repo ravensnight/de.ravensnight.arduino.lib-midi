@@ -104,7 +104,7 @@ void VoiceReceiver::handle(CINType type, const uint8_t* buffer, size_t len) {
         break;
 
     default:
-        Logger::instance.debug("Unhandled voice command: %x. Skip.", command);
+        Logger::debug("Unhandled voice command: %x. Skip.", command);
         break;
     }     
 }

@@ -24,7 +24,7 @@ void SysexReceiver::reset() {
 bool SysexReceiver::append(const uint8_t* msg, size_t len) {
 
     if (_bufferPos + len > _bufferLen) {
-        Logger::instance.warn("SysexReceiver::handle - Buffer overrun. Reset.", len);
+        Logger::warn("SysexReceiver::handle - Buffer overrun. Reset.", len);
         reset();
         return false;
     }
@@ -41,7 +41,7 @@ void SysexReceiver::handle(CINType type, const uint8_t* msg, size_t len) {
 
     if (_state == SysexState::WAITING) {
         if (len < 3) {
-            Logger::instance.warn("SysexReceiver::handle - Unexpected size %d (required 3). Return.", len);
+            Logger::warn("SysexReceiver::handle - Unexpected size %d (required 3). Return.", len);
             reset();
             return;    
         }
@@ -57,7 +57,7 @@ void SysexReceiver::handle(CINType type, const uint8_t* msg, size_t len) {
             case CINType::SysexStart:    // continue normally
             {
                 if (len < 3) {
-                    Logger::instance.warn("SysexReceiver::handle - Unexpected size %d (required 3). Return.", len);
+                    Logger::warn("SysexReceiver::handle - Unexpected size %d (required 3). Return.", len);
                     reset();
                     return;    
                 }
@@ -70,7 +70,7 @@ void SysexReceiver::handle(CINType type, const uint8_t* msg, size_t len) {
             case CINType::SysexEnd1:    // continue normally
             {
                 if (len < 1) {
-                    Logger::instance.warn("SysexReceiver::handle - Unexpected size %d (required 1). Return.", len);
+                    Logger::warn("SysexReceiver::handle - Unexpected size %d (required 1). Return.", len);
                     reset();
                     return;    
                 }
@@ -82,7 +82,7 @@ void SysexReceiver::handle(CINType type, const uint8_t* msg, size_t len) {
             case CINType::SysexEnd2:    // continue normally
             {
                 if (len < 2) {
-                    Logger::instance.warn("SysexReceiver::handle - Unexpected size %d (required 2). Return.", len);
+                    Logger::warn("SysexReceiver::handle - Unexpected size %d (required 2). Return.", len);
                     reset();
                     return;    
                 }
@@ -94,7 +94,7 @@ void SysexReceiver::handle(CINType type, const uint8_t* msg, size_t len) {
             case CINType::SysexEnd3:    // continue normally
             {
                 if (len < 3) {
-                    Logger::instance.warn("SysexReceiver::handle - Unexpected size %d (required 3). Return.", len);
+                    Logger::warn("SysexReceiver::handle - Unexpected size %d (required 3). Return.", len);
                     reset();
                     return;    
                 }
@@ -110,7 +110,7 @@ void SysexReceiver::handle(CINType type, const uint8_t* msg, size_t len) {
 
         // trigger an action.
         if (trigger) {
-            Logger::instance.dump("Midi message buffer is:", _buffer, _bufferPos, 0);
+            Logger::dump("Midi message buffer is:", _buffer, _bufferPos, 0);
 
             ByteInputStream* inputStream = new ByteInputStream(_buffer, _bufferPos);                           
             _handler->onSysEx(inputStream);

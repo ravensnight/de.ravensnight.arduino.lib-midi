@@ -30,22 +30,22 @@ void MidiDevice::usbCallback(void *arg, esp_event_base_t event_base, int32_t eve
         arduino_usb_event_data_t *data = (arduino_usb_event_data_t *)event_data;
         switch (event_id) {
             case ARDUINO_USB_STARTED_EVENT:
-                Logger::instance.info("USB PLUGGED");
+                Logger::info("USB PLUGGED");
                 _available = true;
                 break;
 
             case ARDUINO_USB_STOPPED_EVENT:
-                Logger::instance.info("USB UNPLUGGED");
+                Logger::info("USB UNPLUGGED");
                 _available = false;
                 break;
 
             case ARDUINO_USB_SUSPEND_EVENT:
-                Logger::instance.info("USB SUSPENDED: remote_wakeup_en: %d", data->suspend.remote_wakeup_en);
+                Logger::info("USB SUSPENDED: remote_wakeup_en: %d", data->suspend.remote_wakeup_en);
                 _available = false;
                 break;
 
             case ARDUINO_USB_RESUME_EVENT:
-                Logger::instance.info("USB RESUMED");
+                Logger::info("USB RESUMED");
                 _available = true;
                 break;
 
@@ -54,7 +54,7 @@ void MidiDevice::usbCallback(void *arg, esp_event_base_t event_base, int32_t eve
         }
     } 
     else if (event_base == USB_MIDI_EVENTS) {
-        Logger::instance.debug("MIDI EVENT:  ID=%d, DATA=%d\r\n", event_id, (uint32_t)event_data);
+        Logger::debug("MIDI EVENT:  ID=%d, DATA=%d\r\n", event_id, (uint32_t)event_data);
     }
 }
 
@@ -200,14 +200,14 @@ void MidiDevice::readInput() {
 
         uint8_t header = packet[0];
         uint8_t cable = (header >> 4);
-        Logger::instance.debug("Received midi packet for pipe %d, cin: %02x", cable, (header & 0x0F));
+        Logger::debug("Received midi packet for pipe %d, cin: %02x", cable, (header & 0x0F));
 
         CINType type = (CINType)(0x0F & header);
 
         if (cable < cableCount) {
             uint8_t len = getPacketLen(type);
 
-            Logger::instance.debug("Midi packet size: %d", len);
+            Logger::debug("Midi packet size: %d", len);
             cables[cable]->receiver->handle(type, (packet + 1), len);
         }
 
