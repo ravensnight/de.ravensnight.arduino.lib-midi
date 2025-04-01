@@ -107,12 +107,12 @@ uint16_t MidiDevice::descriptorCallback(uint8_t * dst, uint8_t * itf) {
     return len;
 }
 
-int8_t MidiDevice::attach(const char* name, MidiReceiver* receiver) {
+int8_t MidiDevice::attach(const char* name, MidiCallback cb) {
     if (cableCount < MAX_CABLE_COUNT) {        
 
         CableDef* d = new CableDef();
         d->name = name;
-        d->receiver = receiver;
+        d->callback = cb;
 
         cables[cableCount] = d;
         cableCount++;
@@ -208,9 +208,8 @@ void MidiDevice::readInput() {
             uint8_t len = getPacketLen(type);
 
             Logger::debug("Midi packet size: %d", len);
-            cables[cable]->receiver->handle(type, (packet + 1), len);
+            cables[cable]->callback(cable, type, (packet + 1), len);
         }
-
     }
 
 }

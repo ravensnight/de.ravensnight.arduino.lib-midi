@@ -7,7 +7,6 @@
 #include <USB.h>
 
 #include <midi/MidiCommon.h>
-#include <midi/MidiReceiver.h>
 
 namespace MIDI {
 
@@ -30,9 +29,12 @@ typedef struct {
     const char* serial;
 } USBConfig;
 
+
+typedef void (*MidiCallback)(uint8_t cable, CINType type, const uint8_t* msg, size_t len);
+
 typedef struct {
     const char* name;
-    MidiReceiver* receiver;
+    MidiCallback callback;
 } CableDef ;
 
 class MidiDevice {
@@ -61,7 +63,7 @@ class MidiDevice {
         static MidiDevice instance;
 
         // add a cable with name. return the index of the cable or -1 if entry could not be created.
-        int8_t attach(const char* cableName, MidiReceiver* receiver);
+        int8_t attach(const char* cableName, MidiCallback cb);
 
         // install this interface to USB
         void setup(const USBConfig& config);
