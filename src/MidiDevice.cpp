@@ -18,10 +18,6 @@ MidiDevice::~MidiDevice() {
     _available = false;
     cableCount = 0;
     nameIndex = 0;
-
-    for (int i = 0; i < MAX_CABLE_COUNT; i++) {
-        cables[0] = 0;
-    }
 }
 
 void MidiDevice::usbCallback(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data) {
@@ -110,11 +106,10 @@ uint16_t MidiDevice::descriptorCallback(uint8_t * dst, uint8_t * itf) {
 int8_t MidiDevice::attach(const char* name, MidiCallback cb) {
     if (cableCount < MAX_CABLE_COUNT) {        
 
-        CableDef* d = new CableDef();
-        d->name = name;
-        d->callback = cb;
+        CableDef& def = cables[cableCount];
 
-        cables[cableCount] = d;
+        strncpy(def.name, name, MAX_CABLE_NAMELEN);
+        def.callback = cb;
         cableCount++;
 
         return (cableCount - 1);
@@ -147,7 +142,7 @@ void MidiDevice::setup(const USBConfig& config) {
 
     nameIndex++;
     for (uint8_t i = 0; i < cableCount; i++) {
-        tinyusb_add_string_descriptor(cables[i]->name);
+        tinyusb_add_string_descriptor(cables[i].name);
     }
 
     tinyusb_enable_interface(USB_INTERFACE_MIDI, calculateDescriptorLength(), descriptorCallback);
@@ -208,7 +203,7 @@ void MidiDevice::readInput() {
             uint8_t len = getPacketLen(type);
 
             Logger::debug("Midi packet size: %d", len);
-            cables[cable]->callback(cable, type, (packet + 1), len);
+            cables[cable].callback(cable, type, (packet + 1), len);
         }
     }
 
@@ -220,4 +215,4 @@ MidiDevice MidiDevice::instance = MidiDevice();
 bool MidiDevice::_available = false;
 uint8_t MidiDevice::cableCount = 0;
 uint8_t MidiDevice::nameIndex = 0;
-CableDef* MidiDevice::cables[MAX_CABLE_COUNT] = { 0 };
+CableDef MidiDevice::cables[MAX_CABLE_COUNT];

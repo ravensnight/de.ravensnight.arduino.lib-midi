@@ -10,6 +10,7 @@
 
 namespace MIDI {
 
+#define MAX_CABLE_NAMELEN 25
 #ifndef MAX_CABLE_COUNT
     #define MAX_CABLE_COUNT 3
 #endif
@@ -33,8 +34,8 @@ typedef struct {
 typedef void (*MidiCallback)(uint8_t cable, CINType type, const uint8_t* msg, size_t len);
 
 typedef struct {
-    const char* name;
-    MidiCallback callback;
+    char name[MAX_CABLE_NAMELEN + 1] = { 0 };
+    MidiCallback callback = 0;
 } CableDef ;
 
 class MidiDevice {
@@ -44,7 +45,7 @@ class MidiDevice {
         static bool _available;
         static uint8_t cableCount;
         static uint8_t nameIndex;
-        static CableDef* cables[MAX_CABLE_COUNT];
+        static CableDef cables[MAX_CABLE_COUNT];
 
         static void usbCallback(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data);
         static uint16_t descriptorCallback(uint8_t* dst, uint8_t * itf);
