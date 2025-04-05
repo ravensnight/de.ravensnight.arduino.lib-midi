@@ -27,6 +27,7 @@ size_t ByteInputStream::read(uint8_t* buffer, size_t len) {
     }
 
     memcpy(buffer, (_buffer + _pos), l);
+    _pos += l;
     return l;
 }
 
