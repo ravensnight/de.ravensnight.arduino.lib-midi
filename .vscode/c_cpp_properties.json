@@ -8,10 +8,10 @@
         {
             "name": "PlatformIO",
             "includePath": [
-                "g:/dev/RN-MC1210F/de.ravensnight.arduino.lib-midi2/include",
-                "g:/dev/RN-MC1210F/de.ravensnight.arduino.lib-midi2/src",
-                "g:/dev/RN-MC1210F/de.ravensnight.arduino.lib-midi2/.pio/libdeps/lib-midi/ravensnight lib-logging/include",
-                "g:/dev/RN-MC1210F/de.ravensnight.arduino.lib-midi2/.pio/libdeps/lib-midi/ravensnight lib-logging/src",
+                "g:/dev/RN-MC1210F/de.ravensnight.arduino.lib-midi/include",
+                "g:/dev/RN-MC1210F/de.ravensnight.arduino.lib-midi/src",
+                "g:/dev/RN-MC1210F/de.ravensnight.arduino.lib-midi/.pio/libdeps/lib-midi/ravensnight lib-logging/include",
+                "g:/dev/RN-MC1210F/de.ravensnight.arduino.lib-midi/.pio/libdeps/lib-midi/ravensnight lib-logging/src",
                 "C:/Users/waldwuffel/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/newlib/platform_include",
                 "C:/Users/waldwuffel/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/freertos/include",
                 "C:/Users/waldwuffel/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/freertos/include/esp_additions/freertos",
@@ -249,10 +249,10 @@
             "browse": {
                 "limitSymbolsToIncludedHeaders": true,
                 "path": [
-                    "g:/dev/RN-MC1210F/de.ravensnight.arduino.lib-midi2/include",
-                    "g:/dev/RN-MC1210F/de.ravensnight.arduino.lib-midi2/src",
-                    "g:/dev/RN-MC1210F/de.ravensnight.arduino.lib-midi2/.pio/libdeps/lib-midi/ravensnight lib-logging/include",
-                    "g:/dev/RN-MC1210F/de.ravensnight.arduino.lib-midi2/.pio/libdeps/lib-midi/ravensnight lib-logging/src",
+                    "g:/dev/RN-MC1210F/de.ravensnight.arduino.lib-midi/include",
+                    "g:/dev/RN-MC1210F/de.ravensnight.arduino.lib-midi/src",
+                    "g:/dev/RN-MC1210F/de.ravensnight.arduino.lib-midi/.pio/libdeps/lib-midi/ravensnight lib-logging/include",
+                    "g:/dev/RN-MC1210F/de.ravensnight.arduino.lib-midi/.pio/libdeps/lib-midi/ravensnight lib-logging/src",
                     "C:/Users/waldwuffel/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/newlib/platform_include",
                     "C:/Users/waldwuffel/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/freertos/include",
                     "C:/Users/waldwuffel/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/freertos/include/esp_additions/freertos",
