@@ -1,5 +1,5 @@
 #include <midi/SysexReceiver.h>
-#include <midi/ByteInputStream.h>
+#include <ByteInputStream.h>
 #include <Logger.h>
 
 using namespace MIDI;

@@ -1,4 +1,4 @@
-#include <midi/ByteInputStream.h>
+#include <ByteInputStream.h>
 
 ByteInputStream::ByteInputStream(const uint8_t* buffer, size_t len) {
     _buffer = buffer;

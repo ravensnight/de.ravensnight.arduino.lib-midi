@@ -1,6 +1,9 @@
 
 #include <midi/RolandSysexTypes.h>
 #include <midi/RolandSysexHandler.h>
+
+#include <Masquerade.h>
+#include <Base128.h>
 #include <Logger.h>
 
 using namespace MIDI;
@@ -9,11 +12,16 @@ using namespace LOGGING;
 RolandSysexHandler::RolandSysexHandler(RolandSysexCallback* cb, MidiTransmitter* writer) {
     _cb = cb;
     _out = writer;
+    _conv[Encoding::masquerade] = new Masquerade();
+    _conv[Encoding::base128] = new Base128();
 }
 
 RolandSysexHandler::~RolandSysexHandler() {
     _cb = 0;
     _out = 0;
+
+    delete _conv[Encoding::masquerade];
+    delete _conv[Encoding::base128];
 }
 
 void RolandSysexHandler::checksumAdd(int& checksum, uint8_t val) {
@@ -62,10 +70,11 @@ uint8_t RolandSysexHandler::checksum(RolandAddr& addr, uint8_t* bytes, uint16_t 
 }
 
 int RolandSysexHandler::handleCmdRead(RolandSysexHdr& hdr, ByteInputStream* inputStream) {
-    int len = 0;
-    int recordCount;
+    size_t midiByteLen = 0, encodedSize = 0;
 
     RecordInfo recordInfo = {};
+    AddressInfo addressInfo = {};
+
     uint8_t checksum1, checksum2;
 
     Logger::debug("Roland:Sysex:Read - Parse pull request.");
@@ -76,8 +85,7 @@ int RolandSysexHandler::handleCmdRead(RolandSysexHdr& hdr, ByteInputStream* inpu
         return -1;
     }        
 
-    recordCount = _cb->getRecordCount(hdr.addr);
-    if (recordCount == -1) {
+    if (!_cb->getAddressInfo(hdr.addr, addressInfo)) {
         Logger::warn("Roland:Sysex:Read - Requested address is invalid: %x:%x:%x", hdr.addr.hsb, hdr.addr.msb, hdr.addr.lsb);
         return -1;
     }
@@ -92,55 +100,68 @@ int RolandSysexHandler::handleCmdRead(RolandSysexHdr& hdr, ByteInputStream* inpu
     }
 
     // get record size
-    len = (__lsb(payload[0]) << 14) | (__lsb(payload[1]) << 7) | __lsb(payload[2]);
-    Logger::debug("Roland:Sysex:Read - Size requested %d.", len);
+    midiByteLen = (__lsb(payload[0]) << 14) | (__lsb(payload[1]) << 7) | __lsb(payload[2]);
+    Logger::debug("Roland:Sysex:Read - Midi size requested %d.", midiByteLen);
 
     hdr.cmd = ROLAND_SYSEX_CMD_WRITE; // Set the response command to SET
 
-    for (int rec = 0; rec < recordCount; rec++) {
+    // ------------------------------------------------------------------------
+    // Loop all records
+    // ------------------------------------------------------------------------
+
+    Converter* conv = _conv[addressInfo.recordEncoding];
+
+    for (int rec = 0; rec < addressInfo.recordCount; rec++) {
 
         if (!_cb->getRecordInfo(hdr.addr, rec, recordInfo)) {
             Logger::warn("Invalid address / record num: %x:%x:%x > %x", hdr.addr.hsb, hdr.addr.msb, hdr.addr.lsb, rec);
             continue;
         }
 
-        if (len != recordInfo.size) {
-            Logger::warn("Size requested %d does not match record size %d at %x:%x:%x > %x", len, recordInfo.size, hdr.addr.hsb, hdr.addr.msb, hdr.addr.lsb, rec);
+        encodedSize = conv->getEncodedSize(recordInfo.size);
+        if (midiByteLen != encodedSize) {
+            Logger::warn("Size requested %d does not match record size %d at %x:%x:%x (record:%d)", midiByteLen, encodedSize, hdr.addr.hsb, hdr.addr.msb, hdr.addr.lsb, rec);
             continue;
         }
 
-        size_t outbufferLen = ROLAND_SYSEX_HDR_SIZE + recordInfo.size + 1;
-        uint8_t outbuffer[outbufferLen];
+
+        // read data from model
+        uint8_t recordBuffer[recordInfo.size];
+        _cb->readFromModel(recordInfo.addr, recordBuffer, recordInfo.size); 
+
+        // create midi buffer
+        size_t midiBufferLen = ROLAND_SYSEX_HDR_SIZE + encodedSize + 1;
+        uint8_t midiBuffer[midiBufferLen];
 
         // copy header without address to buffer
-        memcpy(outbuffer, &hdr, ROLAND_SYSEX_HDR_SIZE - 3);    
+        memcpy(midiBuffer, &hdr, ROLAND_SYSEX_HDR_SIZE - 3);    
 
         // copy address to buffer
-        memcpy(outbuffer + (ROLAND_SYSEX_HDR_SIZE - 3), &(recordInfo.addr), 3);    
+        memcpy(midiBuffer + (ROLAND_SYSEX_HDR_SIZE - 3), &(recordInfo.addr), 3);    
 
-        // copy data to buffer
-        _cb->readFromModel(recordInfo.addr, (outbuffer + ROLAND_SYSEX_HDR_SIZE), recordInfo.size); 
+        // convert record data to midi buffer
+        conv->encode(midiBuffer + ROLAND_SYSEX_HDR_SIZE, encodedSize, recordBuffer, recordInfo.size);
 
         // create checksum and add to buffer
-        checksum2 = RolandSysexHandler::checksum(recordInfo.addr, (outbuffer + ROLAND_SYSEX_HDR_SIZE), recordInfo.size);
-        outbuffer[ROLAND_SYSEX_HDR_SIZE + recordInfo.size] = checksum2;
+        checksum2 = RolandSysexHandler::checksum(recordInfo.addr, (midiBuffer + ROLAND_SYSEX_HDR_SIZE), encodedSize);
+        midiBuffer[ROLAND_SYSEX_HDR_SIZE + encodedSize] = checksum2;
         
-        Logger::debug("Roland:Sysex:Read - Send sysex checksum:%x len:%d.", checksum, outbufferLen);
-        _out->sendSysEx(ROLAND_SYSEX_MAN_CODE, outbuffer, outbufferLen);
+        Logger::debug("Roland:Sysex:Read - Send sysex checksum:%x len:%d.", checksum, midiBufferLen);
+        _out->sendSysEx(ROLAND_SYSEX_MAN_CODE, midiBuffer, midiBufferLen);
     }
 
-    return len;
+    return midiByteLen;
 }
 
 int RolandSysexHandler::handleCmdWrite(RolandSysexHdr& hdr, ByteInputStream* inputStream) {
     Logger::debug("Roland:Sysex - Parse set request.");
 
     uint8_t checksum;
-    int recordCount = 0, len = 0;
+    size_t len = 0;
     RecordInfo recordInfo = {};
+    AddressInfo addressInfo = {};
 
-    recordCount = _cb->getRecordCount(hdr.addr);
-    if (recordCount < 1) {
+    if (!_cb->getAddressInfo(hdr.addr, addressInfo)) {
         Logger::warn("Invalid address for write command: %x:%x:%x. Stop.", hdr.addr.hsb, hdr.addr.msb, hdr.addr.lsb);
         return -1;
     }
@@ -150,22 +171,29 @@ int RolandSysexHandler::handleCmdWrite(RolandSysexHdr& hdr, ByteInputStream* inp
         return -1;
     }
 
-    size_t bufsize = recordInfo.size + 1;      // record size + checksum byte
-    uint8_t payload[bufsize];      // buffer is size + 1 byte for checksum
+    Converter* conv = _conv[addressInfo.recordEncoding];
 
-    len = inputStream->read(payload, bufsize);       // read buffer incl. checksum
+    size_t midiBufferSize = conv->getEncodedSize(recordInfo.size);
+    size_t bufsize = midiBufferSize + 1;        // encoded stream size + checksum byte
+    uint8_t midiPayload[bufsize];               // buffer is size + 1 byte for checksum
+    uint8_t decodedBuffer[recordInfo.size];     // model buffer is record size
+
+    len = inputStream->read(midiPayload, bufsize);   // read buffer incl. checksum
     if (len < bufsize) {
         Logger::warn("Could not read the sysex buffer of size %d. Received %d instead. Stop.", bufsize, len);
         return -1;
     }
 
-    checksum = RolandSysexHandler::checksum(hdr.addr, payload, recordInfo.size);
-    if (checksum != payload[recordInfo.size]) {
-        Logger::warn("Roland:Sysex:Write - Calculated checksum does not match received: %x, calculated: %x", payload[recordInfo.size], checksum);
+    checksum = RolandSysexHandler::checksum(hdr.addr, midiPayload, midiBufferSize);
+    if (checksum != midiPayload[midiBufferSize]) {
+        Logger::warn("Roland:Sysex:Write - Calculated checksum does not match received: %x, calculated: %x", midiPayload[midiBufferSize], checksum);
         return -1;
     }
 
-    _cb->writeToModel(hdr.addr, payload, recordInfo.size);
+    // convert to model data.
+    conv->decode(decodedBuffer, recordInfo.size, midiPayload, midiBufferSize);
+    _cb->writeToModel(hdr.addr, decodedBuffer, recordInfo.size);
+
     return recordInfo.size;
 }
 

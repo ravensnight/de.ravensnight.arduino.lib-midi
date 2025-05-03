@@ -1,16 +1,20 @@
 #include <esp32-hal-tinyusb.h>
 #include <midi/MidiDevice.h>
 #include <midi/MidiTransmitter.h>
+#include <Masquerade.h>
 #include <Logger.h>
 
 using namespace MIDI;
 using namespace LOGGING;
 
-MidiTransmitter::MidiTransmitter(uint8_t cable) {  
+MidiTransmitter::MidiTransmitter(uint8_t cable, size_t bufferSize) {  
     _cable = cable;
+    _outBufferSize = bufferSize;
+    _outBuffer = (uint8_t*)malloc(bufferSize);
 }
 
 MidiTransmitter::~MidiTransmitter() {    
+    free(_outBuffer);
 }
 
 size_t MidiTransmitter::write(const uint8_t *buf, size_t size) {
@@ -125,15 +129,30 @@ void MidiTransmitter::sendMidiContinue() {
     send(MessageType::MidiContinue, 0, 0, 0);
 }
 
-void MidiTransmitter::sendSysEx(uint8_t channel, uint8_t payload[], uint16_t len) {
-    uint16_t size = len + 3;
-    uint8_t buffer[size];
+size_t MidiTransmitter::sendSysEx(uint8_t channel, uint8_t payload[], uint16_t len, Converter& converter) {
+    std::lock_guard<std::mutex> lock(bufferLock);
+
+    size_t payloadSize = converter.getEncodedSize(len);
+    uint16_t size = payloadSize + 3;
+
+    if (size > _outBufferSize) {
+        Logger::error("MidiTransmitter::sendSysEx - outbuffer size %d exceeded by payload size %d(%d). Cannot send sysex!", _outBufferSize, size, len);
+        return -1;
+    }
     
-    buffer[0] = (uint8_t)MessageType::SysExStart;
-    buffer[1] = channel;
-    memcpy(buffer + 2, payload, len);
-    buffer[len + 2] = (uint8_t)MessageType::SysExEnd;
+    _outBuffer[0] = (uint8_t)MessageType::SysExStart;
+    _outBuffer[1] = channel;
+
+    converter.encode(_outBuffer + 2, payloadSize, payload, len);
+    _outBuffer[payloadSize + 2] = (uint8_t)MessageType::SysExEnd;
     
-    Logger::dump("Send SysEx bytes: ", buffer, size, 0);
-    write(buffer, size);    
+    Logger::dump("Send SysEx bytes: ", _outBuffer, size, 0);
+    write(_outBuffer, size);    
+
+    return size;
+}
+
+size_t MidiTransmitter::sendSysEx(uint8_t channel, uint8_t payload[], uint16_t len) {
+    Masquerade conv = Masquerade();
+    return sendSysEx(channel, payload, len, conv);
 }

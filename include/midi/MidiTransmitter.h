@@ -3,14 +3,21 @@
 
 #include <Arduino.h>
 #include <Stream.h>
+#include <Converter.h>
 #include <midi/MidiDevice.h>
+#include <mutex>
 
 namespace MIDI {
 
     class MidiTransmitter {
 
         private:
+            std::mutex bufferLock;
+
             uint8_t _cable;
+
+            size_t _outBufferSize;
+            uint8_t* _outBuffer;
 
             // write binary data to midi out for the cable configured.
             size_t write(const uint8_t *buf, size_t size);
@@ -18,7 +25,7 @@ namespace MIDI {
         public:
 
         // constructors
-        MidiTransmitter(uint8_t cable);
+        MidiTransmitter(uint8_t cable, size_t outBufferSize);
         ~MidiTransmitter();
 
         // generic midi send function
@@ -42,7 +49,8 @@ namespace MIDI {
         void sendMidiContinue();
 
         /**
-         * Send a sysex message.
+         * Send a sysex message using the given byte converter.
+         * 
          * @param channel can be one of:
          *  - the predefined manufacturer ID or 
          *  - 0x00,  where buffer must contain first 2 bytes of a new-manufacturer ID
@@ -50,10 +58,35 @@ namespace MIDI {
          *  - 0x7F for Realtime messages
          *  - any other specific ID.
          * 
-         * @param buffer holds the bytes to be sent
+         * @param buffer holds the bytes to be converted and sent
          * @param len informs about the number of bytes to read from buffer.
+         * 
+         * @return the number of bytes sent.
+         * 
          */
-        void sendSysEx(uint8_t channel, uint8_t* buffer, uint16_t len);
+        size_t sendSysEx(uint8_t channel, uint8_t payload[], uint16_t len);
+
+        /**
+         * Send a sysex message as raw bytes. 
+         * Note: 
+         * The given input data is expected to contain 7bit data up to number 127 (7F).
+         * If it does not match it is being masqueraded.
+         * 
+         * @param channel can be one of:
+         *  - the predefined manufacturer ID or 
+         *  - 0x00,  where buffer must contain first 2 bytes of a new-manufacturer ID
+         *  - 0x7E for Non-Realtime Messages or 
+         *  - 0x7F for Realtime messages
+         *  - any other specific ID.
+         * 
+         * @param buffer holds the bytes to be converted and sent
+         * @param len informs about the number of bytes to read from buffer.
+         * 
+         * @return the number of bytes sent.
+         * 
+         */
+        size_t sendSysEx(uint8_t channel, uint8_t payload[], uint16_t len, Converter& converter);
+
     };
 
 }

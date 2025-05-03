@@ -21,6 +21,7 @@ namespace MIDI {
 
             MidiTransmitter* _out;
             RolandSysexCallback* _cb;
+            Converter* _conv[2];
 
             /**
              * Parse a message from Midi In-Stream and potentially respond to writer.

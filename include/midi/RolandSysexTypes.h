@@ -17,6 +17,19 @@ namespace MIDI {
 
     } RolandAddr;
 
+    typedef enum : uint8_t{
+        masquerade = 0,
+        base128 = 1
+    } Encoding;
+
+    /**
+     * Defines an info set for a given address
+     */
+    typedef struct {        
+        uint16_t recordCount;       // number of records being sent/received
+        Encoding recordEncoding;    // information about the encoding
+    } AddressInfo;
+
     /**
      * Defines the record info which is required to 
      * read or send some sysex message.

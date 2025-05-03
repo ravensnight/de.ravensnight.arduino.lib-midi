@@ -2,7 +2,7 @@
 #define __SYSEX_HANDLER_H__
 
 #include <Arduino.h>
-#include <midi/ByteInputStream.h>
+#include <ByteInputStream.h>
 
 namespace MIDI {
 

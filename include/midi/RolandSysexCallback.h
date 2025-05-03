@@ -32,7 +32,7 @@ namespace MIDI {
              * Provide the number of records which shall be read or sent.
              * If the given address is invalid -1 shall be returned.
              */
-            virtual int getRecordCount(const RolandAddr& src) = 0;
+            virtual bool getAddressInfo(const RolandAddr& src, AddressInfo& info) = 0;
 
             /**
              * Apply the data which has been received from sysex
