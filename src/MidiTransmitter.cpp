@@ -13,6 +13,12 @@ MidiTransmitter::MidiTransmitter(uint8_t cable, size_t bufferSize) {
     _outBuffer = (uint8_t*)malloc(bufferSize);
 }
 
+MidiTransmitter::MidiTransmitter(MidiTransmitter& source) {  
+    _cable = source._cable;
+    _outBufferSize = source._outBufferSize;
+    _outBuffer = (uint8_t*)malloc(_outBufferSize);
+}
+
 MidiTransmitter::~MidiTransmitter() {    
     free(_outBuffer);
 }

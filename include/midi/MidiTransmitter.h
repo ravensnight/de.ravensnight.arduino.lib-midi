@@ -26,6 +26,8 @@ namespace MIDI {
 
         // constructors
         MidiTransmitter(uint8_t cable, size_t outBufferSize);
+        MidiTransmitter(MidiTransmitter& source);
+        
         ~MidiTransmitter();
 
         // generic midi send function
