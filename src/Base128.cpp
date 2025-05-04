@@ -21,7 +21,7 @@ size_t Base128::decode(uint8_t* outBytes, size_t outBufferSize, const uint8_t* i
 
     for (size_t inIndex = 0; inIndex < outSize; inIndex++) {
         in = inBytes[inIndex];
-        Logger::debug("decode - source: %x", in);
+        //Logger::debug("decode - source: %x", in);
 
         for (int i = 0; i < 7; i++) {
             out <<= 1;
@@ -33,7 +33,7 @@ size_t Base128::decode(uint8_t* outBytes, size_t outBufferSize, const uint8_t* i
 
             bit++;
             if (bit == 8) {
-                Logger::debug("decode - write out: %x", out);
+                //Logger::debug("decode - write out: %x", out);
                 outBytes[outIndex] = out;
                 bit = 0;
                 out = 0;                    
@@ -62,7 +62,7 @@ size_t Base128::encode(uint8_t* outBytes, size_t outBufferSize, const uint8_t* i
 
     for (size_t inIndex = 0; inIndex < inSize; inIndex++) {
         in = inBytes[inIndex];
-        Logger::debug("encode - source: %x", in);
+        //Logger::debug("encode - source: %x", in);
 
         for (int i = 0; i < 8; i++) {
             out <<= 1;
@@ -72,7 +72,7 @@ size_t Base128::encode(uint8_t* outBytes, size_t outBufferSize, const uint8_t* i
             }
             bit++;
             if (bit == 7) {
-                Logger::debug("encode - write out: %x", out);
+                //Logger::debug("encode - write out: %x", out);
                 outBytes[outIndex] = out;
                 bit = 0;
                 out = 0;   
@@ -83,7 +83,7 @@ size_t Base128::encode(uint8_t* outBytes, size_t outBufferSize, const uint8_t* i
 
     if (bit > 0) {
         out <<= (7 - bit);
-        Logger::debug("encode - write out: %x", out);
+        //Logger::debug("encode - write out: %x", out);
         outBytes[outIndex] = out;
         outIndex++;                 
     }
