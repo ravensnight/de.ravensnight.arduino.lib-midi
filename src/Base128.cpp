@@ -19,7 +19,7 @@ size_t Base128::decode(uint8_t* outBytes, size_t outBufferSize, const uint8_t* i
     uint8_t out = 0, in = 0, bit = 0;
     size_t outIndex = 0;
 
-    for (size_t inIndex = 0; inIndex < outSize; inIndex++) {
+    for (size_t inIndex = 0; inIndex < inSize; inIndex++) {
         in = inBytes[inIndex];
         //Logger::debug("decode - source: %x", in);
 
