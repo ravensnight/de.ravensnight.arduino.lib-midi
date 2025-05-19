@@ -111,6 +111,7 @@ int RolandSysexHandler::handleCmdRead(RolandSysexHdr& hdr, ByteInputStream* inpu
 
     Converter* conv = _conv[addressInfo.recordEncoding];
 
+    Logger::debug("Loop records.");
     for (int rec = 0; rec < addressInfo.recordCount; rec++) {
 
         if (!_cb->getRecordInfo(hdr.addr, rec, recordInfo)) {
@@ -118,20 +119,21 @@ int RolandSysexHandler::handleCmdRead(RolandSysexHdr& hdr, ByteInputStream* inpu
             continue;
         }
 
+        Logger::debug("Read record at addr: %02x:%02x:%02x, size=%d", recordInfo.addr.hsb, recordInfo.addr.msb, recordInfo.addr.lsb, recordInfo.size);
+
         encodedSize = conv->getEncodedSize(recordInfo.size);
         if (midiByteLen != encodedSize) {
             Logger::warn("Size requested %d does not match record size %d at %x:%x:%x (record:%d)", midiByteLen, encodedSize, hdr.addr.hsb, hdr.addr.msb, hdr.addr.lsb, rec);
             continue;
         }
 
-
         // read data from model
-        uint8_t recordBuffer[recordInfo.size];
+        uint8_t* recordBuffer = (uint8_t*)malloc(recordInfo.size);
         _cb->readFromModel(recordInfo.addr, recordBuffer, recordInfo.size); 
 
         // create midi buffer
-        size_t midiBufferLen = ROLAND_SYSEX_HDR_SIZE + encodedSize + 1;
-        uint8_t midiBuffer[midiBufferLen];
+        size_t midiBufferLen = ROLAND_SYSEX_HDR_SIZE + encodedSize + 1;        
+        uint8_t* midiBuffer = (uint8_t*)malloc(midiBufferLen);
 
         // copy header without address to buffer
         memcpy(midiBuffer, &hdr, ROLAND_SYSEX_HDR_SIZE - 3);    
@@ -141,6 +143,7 @@ int RolandSysexHandler::handleCmdRead(RolandSysexHdr& hdr, ByteInputStream* inpu
 
         // convert record data to midi buffer
         conv->encode(midiBuffer + ROLAND_SYSEX_HDR_SIZE, encodedSize, recordBuffer, recordInfo.size);
+        free(recordBuffer); recordBuffer = 0;
 
         // create checksum and add to buffer
         checksum2 = RolandSysexHandler::checksum(recordInfo.addr, (midiBuffer + ROLAND_SYSEX_HDR_SIZE), encodedSize);
@@ -148,6 +151,8 @@ int RolandSysexHandler::handleCmdRead(RolandSysexHdr& hdr, ByteInputStream* inpu
         
         Logger::debug("Roland:Sysex:Read - Send sysex checksum:%x len:%d.", checksum, midiBufferLen);
         _out->sendSysEx(ROLAND_SYSEX_MAN_CODE, midiBuffer, midiBufferLen);
+
+        free(midiBuffer); midiBuffer = 0;
     }
 
     return midiByteLen;
@@ -175,24 +180,32 @@ int RolandSysexHandler::handleCmdWrite(RolandSysexHdr& hdr, ByteInputStream* inp
 
     size_t midiBufferSize = conv->getEncodedSize(recordInfo.size);
     size_t bufsize = midiBufferSize + 1;        // encoded stream size + checksum byte
-    uint8_t midiPayload[bufsize];               // buffer is size + 1 byte for checksum
-    uint8_t decodedBuffer[recordInfo.size];     // model buffer is record size
+    
+    uint8_t* midiPayload = (uint8_t*)malloc(bufsize); // buffer is size + 1 byte for checksum
 
     len = inputStream->read(midiPayload, bufsize);   // read buffer incl. checksum
     if (len < bufsize) {
         Logger::warn("Could not read the sysex buffer of size %d. Received %d instead. Stop.", bufsize, len);
+        free(midiPayload); midiPayload = 0;
         return -1;
     }
 
     checksum = RolandSysexHandler::checksum(hdr.addr, midiPayload, midiBufferSize);
     if (checksum != midiPayload[midiBufferSize]) {
         Logger::warn("Roland:Sysex:Write - Calculated checksum does not match received: %x, calculated: %x", midiPayload[midiBufferSize], checksum);
+        free(midiPayload); midiPayload = 0;
         return -1;
     }
 
     // convert to model data.
+    uint8_t* decodedBuffer = (uint8_t*)malloc(recordInfo.size);     // model buffer is record size
+
     conv->decode(decodedBuffer, recordInfo.size, midiPayload, midiBufferSize);
     _cb->writeToModel(hdr.addr, decodedBuffer, recordInfo.size);
+
+    // free buffers
+    free(midiPayload); midiPayload = 0;
+    free(decodedBuffer); decodedBuffer = 0;
 
     return recordInfo.size;
 }
