@@ -28,13 +28,13 @@ namespace MIDI {
              * Returns the number of bytes read or sent as payload or -1, if address was invalid or message could not be parsed correctly.
              */
             int handleSysEx(ByteInputStream* inputStream);
-            int handleCmdRead(RolandSysexHdr& hdr, ByteInputStream* inputStream);
-            int handleCmdWrite(RolandSysexHdr& hdr, ByteInputStream* inputStream);
+            int handleCmdRead(RolandSysexAddr& addr, ByteInputStream* inputStream);
+            int handleCmdWrite(RolandSysexAddr& addr, ByteInputStream* inputStream);
 
             /**
              * Calculate the checksum
              */
-            static uint8_t checksum(RolandAddr& addr, uint8_t* bytes, uint16_t len);
+            static uint8_t checksum(RolandSysexAddr& addr, uint8_t* bytes, uint16_t len);
             static void checksumAdd(int& previous, uint8_t value);
 
     };

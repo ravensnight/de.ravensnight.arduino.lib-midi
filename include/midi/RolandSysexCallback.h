@@ -26,23 +26,23 @@ namespace MIDI {
              * @param record the record number to get all record info for
              * @param info the info being provided by callback instance
              */        
-            virtual bool getRecordInfo(const RolandAddr& addr, int record, RecordInfo& info) = 0;
+            virtual bool getRecordInfo(const RolandSysexAddr& addr, int record, RecordInfo& info) = 0;
 
             /**
              * Provide the number of records which shall be read or sent.
              * If the given address is invalid -1 shall be returned.
              */
-            virtual bool getAddressInfo(const RolandAddr& src, AddressInfo& info) = 0;
+            virtual bool getAddressInfo(const RolandSysexAddr& src, AddressInfo& info) = 0;
 
             /**
              * Apply the data which has been received from sysex
              */
-            virtual void writeToModel(const RolandAddr& addr, const uint8_t buffer[], uint16_t size) = 0;
+            virtual void writeToModel(const RolandSysexAddr& addr, const uint8_t buffer[], uint16_t size) = 0;
 
             /**
              * Read some data from addr and provide it to buffer.
              */
-            virtual void readFromModel(const RolandAddr& addr, uint8_t buffer[], uint16_t size) = 0;
+            virtual void readFromModel(const RolandSysexAddr& addr, uint8_t buffer[], uint16_t size) = 0;
 
     };
 
