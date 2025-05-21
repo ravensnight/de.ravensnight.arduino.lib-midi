@@ -57,9 +57,9 @@ void RolandSysexHandler::onSysEx(ByteInputStream* inputStream) {
 uint8_t RolandSysexHandler::checksum(RolandSysexAddr& addr, uint8_t* bytes, uint16_t len) {
     int res = 0;
 
-    checksumAdd(res, addr.get7BitHSB());    
-    checksumAdd(res, addr.get7BitMSB());    
-    checksumAdd(res, addr.get7BitLSB());    
+    checksumAdd(res, addr.get7bitHSB());    
+    checksumAdd(res, addr.get7bitMSB());    
+    checksumAdd(res, addr.get7bitLSB());    
 
     for (int i = 0; i < len; i++) {
         checksumAdd(res, bytes[i]);    
@@ -86,7 +86,7 @@ int RolandSysexHandler::handleCmdRead(RolandSysexAddr& addr, ByteInputStream* in
     }        
 
     if (!_cb->getAddressInfo(addr, addressInfo)) {
-        Logger::warn("Roland:Sysex:Read - Requested address is invalid: %03x", addr.value());
+        Logger::warn("Roland:Sysex:Read - Requested address is invalid: %03x", addr.get());
         return -1;
     }
 
@@ -113,15 +113,15 @@ int RolandSysexHandler::handleCmdRead(RolandSysexAddr& addr, ByteInputStream* in
     for (int rec = 0; rec < addressInfo.recordCount; rec++) {
 
         if (!_cb->getRecordInfo(addr, rec, recordInfo)) {
-            Logger::warn("Invalid address / record num: %x > %x", addr.value(), rec);
+            Logger::warn("Invalid address / record num: %x > %x", addr.get(), rec);
             continue;
         }
 
-        Logger::debug("Read record at addr: %03x, size=%d", recordInfo.addr.value(), recordInfo.size);
+        Logger::debug("Read record at addr: %03x, size=%d", recordInfo.addr.get(), recordInfo.size);
 
         encodedSize = conv->getEncodedSize(recordInfo.size);
         if (midiByteLen != encodedSize) {
-            Logger::warn("Size requested %d does not match record size %d at %03x (record:%d)", midiByteLen, encodedSize, addr.value(), rec);
+            Logger::warn("Size requested %d does not match record size %d at %03x (record:%d)", midiByteLen, encodedSize, addr.get(), rec);
             continue;
         }
 
@@ -138,12 +138,10 @@ int RolandSysexHandler::handleCmdRead(RolandSysexAddr& addr, ByteInputStream* in
             .device =  _cb->getDeviceID(),
             .model = _cb->getModelID() ,
             .cmd = ROLAND_SYSEX_CMD_WRITE, // Set the response command to SET                       
-            .addr = { 
-                recordInfo.addr.get7BitHSB(), 
-                recordInfo.addr.get7BitMSB(),
-                recordInfo.addr.get7BitLSB()   
-            }
+            .addr = { 0 }
         };
+
+        recordInfo.addr.read(responseHdr.addr);
 
         // copy full header 
         memcpy(midiBuffer, &responseHdr, ROLAND_SYSEX_HDR_SIZE);    
@@ -174,12 +172,12 @@ int RolandSysexHandler::handleCmdWrite(RolandSysexAddr& addr, ByteInputStream* i
     AddressInfo addressInfo = {};
 
     if (!_cb->getAddressInfo(addr, addressInfo)) {
-        Logger::warn("Invalid address for write command: %x. Stop.", addr.value());
+        Logger::warn("Invalid address for write command: %x. Stop.", addr.get());
         return -1;
     }
 
     if (!_cb->getRecordInfo(addr, 0, recordInfo)) {
-        Logger::warn("Record Info was not provided for address: %x. Stop.", addr.value());
+        Logger::warn("Record Info was not provided for address: %x. Stop.", addr.get());
         return -1;
     }
 
@@ -250,7 +248,7 @@ int RolandSysexHandler::handleSysEx(ByteInputStream* inputStream) {
         return -1;
     }
 
-    RolandSysexAddr addr(hdr.addr[0], hdr.addr[1], hdr.addr[2]);
+    RolandSysexAddr addr(hdr.addr);
 
     if (hdr.cmd == ROLAND_SYSEX_CMD_READ) {
         return handleCmdRead(addr, inputStream);

@@ -36,10 +36,10 @@ namespace MIDI {
     } RecordInfo;
 
     typedef struct {
-        volatile uint8_t device;
-        volatile uint8_t model;
-        volatile uint8_t cmd;             
-        volatile uint8_t addr[3];
+        uint8_t device;
+        uint8_t model;
+        uint8_t cmd;             
+        uint8_t addr[3];
     } RolandSysexHdr;
 
 }

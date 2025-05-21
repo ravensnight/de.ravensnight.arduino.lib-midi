@@ -6,26 +6,40 @@ RolandSysexAddr::RolandSysexAddr() {
     this->addr = 0;
 }
 
-RolandSysexAddr::RolandSysexAddr(uint32_t addr) {
-    this->addr = 0x1FFFFF & addr;
+RolandSysexAddr::RolandSysexAddr(const uint32_t addr) {
+    set(addr);
 }
 
-RolandSysexAddr::RolandSysexAddr(uint8_t hsb, uint8_t msb, uint8_t lsb) {
-    this->addr = ((hsb & 0x7F) << 14) | ((msb & 0x7F) << 7) | (lsb & 0x7F);
+RolandSysexAddr::RolandSysexAddr(const uint8_t addr[3]) {
+    write(addr);
 }
 
-uint32_t RolandSysexAddr::value() {
+uint32_t RolandSysexAddr::get() const {
     return addr;
 }
 
-uint8_t RolandSysexAddr::get7BitHSB() {
+void RolandSysexAddr::set(const uint32_t val) {
+    addr = 0x1FFFFF & val;
+}
+
+void RolandSysexAddr::write(const uint8_t value[3]) {
+    addr = ((value[0] & 0x7F) << 14) | ((value[1] & 0x7F) << 7) | (value[2] & 0x7F);
+}
+
+void RolandSysexAddr::read(uint8_t value[3]) const {
+    value[0] = get7bitHSB();
+    value[1] = get7bitMSB();
+    value[2] = get7bitLSB();
+}
+
+uint8_t RolandSysexAddr::get7bitHSB() const {
     return ((addr >> 14) & 0x7F);
 }
 
-uint8_t RolandSysexAddr::get7BitMSB() {
+uint8_t RolandSysexAddr::get7bitMSB() const {
     return ((addr >> 7) & 0x7F);
 }
 
-uint8_t RolandSysexAddr::get7BitLSB() {
+uint8_t RolandSysexAddr::get7bitLSB() const {
     return (addr & 0x7F);
 }

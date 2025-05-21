@@ -13,22 +13,37 @@ namespace MIDI {
             /**
              * Create a roland addr from given 21bit value.
              */
-            RolandSysexAddr(uint32_t addr);
+            RolandSysexAddr(const uint32_t addr);
 
             /**
              * Create a roland addr from 7bit coded 3bytes
              */
-            RolandSysexAddr(uint8_t hsb, uint8_t msb, uint8_t lsb);
+            RolandSysexAddr(const uint8_t value[3]);
 
             /**
              * Provide the address value.
              */
-            uint32_t value(); 
+            uint32_t get() const; 
+
+            /**
+             * Read as 7bit value
+             */
+            void read(uint8_t value[3]) const;
+
+            /**
+             * Set from 8bit coded
+             */
+            void set(const uint32_t val);
+
+            /**
+             * Set from 7bit coded
+             */
+            void write(const uint8_t value[3]);
 
 
-            uint8_t get7BitHSB();
-            uint8_t get7BitMSB();
-            uint8_t get7BitLSB();
+            uint8_t get7bitHSB() const;
+            uint8_t get7bitMSB() const;
+            uint8_t get7bitLSB() const;
 
         private:
 
