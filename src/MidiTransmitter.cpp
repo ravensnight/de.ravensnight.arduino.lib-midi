@@ -41,11 +41,12 @@ size_t MidiTransmitter::write(const uint8_t *buf, size_t size) {
 
 void MidiTransmitter::send(MessageType type, uint8_t channel, uint8_t val1, uint8_t val2) {
 
-    MidiMsg msg;
     uint8_t t = (uint8_t)type;
-    msg.status = (uint8_t)((t & 0xF0) == 0xF0 ? t : (t | (channel & 0x0F)));
-    msg.value1 = __lsb(val1);
-    msg.value2 = __lsb(val2);
+    uint8_t msg[3];
+
+    msg[0] = (uint8_t)((t & 0xF0) == 0xF0 ? t : (t | (channel & 0x0F)));
+    msg[1] = __lsb(val1);
+    msg[2] = __lsb(val2);
 
     switch (type) {
         case MessageType::NoteOn:
@@ -54,19 +55,19 @@ void MidiTransmitter::send(MessageType type, uint8_t channel, uint8_t val1, uint
         case MessageType::ControlChange:
         case MessageType::ModulationWheel:
         case MessageType::SongPos:
-            write(__buffer(&msg), 3);
+            write(msg, 3);
             break;
 
         case MessageType::ProgramChange:
         case MessageType::ChannelPressure:
         case MessageType::SongSel:
-            write(__buffer(&msg), 2);
+            write(msg, 2);
             break;
         
         case MessageType::MidiStart:
         case MessageType::MidiStop:
         case MessageType::MidiContinue:
-            write(__buffer(&msg), 1);
+            write(msg, 1);
             break;
 
         default:

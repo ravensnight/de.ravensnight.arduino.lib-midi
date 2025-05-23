@@ -58,12 +58,6 @@ namespace MIDI {
     
     };
 
-    typedef struct _MidiMsg {
-        uint8_t status;
-        uint8_t value1;
-        uint8_t value2;
-    } MidiMsg;
-
 }
 
 

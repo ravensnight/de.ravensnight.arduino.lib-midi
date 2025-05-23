@@ -36,59 +36,61 @@ bool VoiceReceiver::accepted(CINType type) {
 
 void VoiceReceiver::handle(CINType type, const uint8_t* buffer, size_t len) {
 
-    if ((_cb == 0) || (!accepted(type))) return;
+    if ((_cb == 0) || (!accepted(type)) || (len < 3)) {
+        Logger::warn("Cannot handle message: type=%d, len=%d", type, len);
+        return;
+    }
+
+    uint8_t status = buffer[0];
+    uint8_t value1 = buffer[1];
+    uint8_t value2 = buffer[2];
 
     MessageType command = MessageType::Reset;
     uint8_t channel = 0;
     
-    MidiMsg msg = { .status = 0, .value1 = 0, .value2 = 0 };
-    size_t l = (len > 3) ? 3 : len;
-
-    memcpy(&msg, buffer, l);
-
-    if (msg.status < 0xF0) {
-        command = (MessageType)(msg.status & 0xF0);
-        channel = (msg.status & 0x0F);
+    if (status < 0xF0) {
+        command = (MessageType)(status & 0xF0);
+        channel = (status & 0x0F);
     } else {
         channel = 0;
-        command = (MessageType)msg.status;
+        command = (MessageType)status;
     }
 
     switch (command) {
     case MessageType::NoteOn:
-        _cb->onNoteOn(channel, msg.value1, msg.value2);
+        _cb->onNoteOn(channel, value1, value2);
         break;
 
     case MessageType::NoteOff:
-        _cb->onNoteOff(channel, msg.value1, msg.value2);
+        _cb->onNoteOff(channel, value1, value2);
         break;
 
     case MessageType::Aftertouch:
-        _cb->onAftertouch(channel, msg.value1, msg.value2);
+        _cb->onAftertouch(channel, value1, value2);
         break;
 
     case MessageType::ControlChange:
-        _cb->onControlChange(channel, msg.value1, msg.value2);
+        _cb->onControlChange(channel, value1, value2);
         break;
 
     case MessageType::ProgramChange:
-        _cb->onProgramSelect(channel, msg.value1);
+        _cb->onProgramSelect(channel, value1);
         break;
 
     case MessageType::ChannelPressure:
-        _cb->onChannelPressure(channel, msg.value1);
+        _cb->onChannelPressure(channel, value1);
         break;
 
     case MessageType::ModulationWheel:
-        _cb->onModulationWheel(channel, __14bit(msg.value2, msg.value1));
+        _cb->onModulationWheel(channel, __14bit(value2, value1));
         break;
 
     case MessageType::SongPos:                
-        _cb->onSongPos(__14bit(msg.value2, msg.value1));
+        _cb->onSongPos(__14bit(value2, value1));
         break;
 
     case MessageType::SongSel:
-        _cb->onSongSel(msg.value1);
+        _cb->onSongSel(value1);
         break;
     
     case MessageType::MidiStart:
