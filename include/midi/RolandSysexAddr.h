@@ -2,7 +2,6 @@
 #define __ROLAND_SYSEX_ADDR_H__
 
 #include <Arduino.h>
-
 namespace MIDI {
 
     class RolandSysexAddr {
@@ -39,7 +38,6 @@ namespace MIDI {
              * Set from 7bit coded
              */
             void write(const uint8_t value[3]);
-
 
             uint8_t get7bitHSB() const;
             uint8_t get7bitMSB() const;

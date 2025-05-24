@@ -1,5 +1,6 @@
 
 #include <midi/RolandSysexTypes.h>
+#include <midi/RolandSysexHdr.h>
 #include <midi/RolandSysexHandler.h>
 
 #include <Masquerade.h>
@@ -37,7 +38,7 @@ void RolandSysexHandler::onSysEx(ByteInputStream* inputStream) {
     uint8_t len;
 
     uint8_t start[2];
-    len = inputStream->read(start, 2);
+    len = inputStream->readBytes(start, 2);
     if (len < 2) {
         Logger::error("Input stream did not provide the first two bytes of sysex stream.");
         return;
@@ -80,7 +81,7 @@ int RolandSysexHandler::handleCmdRead(RolandSysexAddr& addr, ByteInputStream* in
     Logger::debug("Roland:Sysex:Read - Parse pull request.");
 
     uint8_t payload[4];     // 3 bytes for expected size + 1 byte checksum        
-    if (inputStream->read(payload, 4) < 4) {
+    if (inputStream->readBytes(payload, 4) < 4) {
         Logger::warn("Roland:Sysex:Read - Did not receive payload 4 bytes. Stop here.");
         return -1;
     }        
@@ -188,7 +189,7 @@ int RolandSysexHandler::handleCmdWrite(RolandSysexAddr& addr, ByteInputStream* i
     
     uint8_t* midiPayload = (uint8_t*)malloc(bufsize); // buffer is size + 1 byte for checksum
 
-    len = inputStream->read(midiPayload, bufsize);   // read buffer incl. checksum
+    len = inputStream->readBytes(midiPayload, bufsize);   // read buffer incl. checksum
     if (len < bufsize) {
         Logger::warn("Could not read the sysex buffer of size %d. Received %d instead. Stop.", bufsize, len);
         free(midiPayload); midiPayload = 0;
@@ -226,7 +227,14 @@ int RolandSysexHandler::handleSysEx(ByteInputStream* inputStream) {
     size_t len, bufsize;
 
     Logger::debug("Roland:Sysex - Read Header.");
-    len = inputStream->read(__buffer(&hdr), ROLAND_SYSEX_HDR_SIZE);
+
+    if (inputStream->available() < ROLAND_SYSEX_HDR_SIZE) {
+        Logger::warn("Roland:Sysex - Header could not be read (received %d bytes). Stop.", len);
+        Logger::dump("Roland header received", __buffer(&hdr), len, 0);
+        return -1;
+    }
+
+    (*inputStream) >> hdr;
 
     if (len < ROLAND_SYSEX_HDR_SIZE) {
         Logger::warn("Roland:Sysex - Header could not be read (received %d bytes). Stop.", len);
