@@ -6,18 +6,17 @@
 
 namespace MIDI {
 
-    typedef struct __RolandSysexHdr {
+    class RolandSysexHdr {
+        public:
+
         uint8_t device;
         uint8_t model;
         uint8_t cmd;             
         uint8_t addr[3];
 
-        friend Stream& operator >>(Stream& is, __RolandSysexHdr& hdr);
-        friend Stream& operator <<(Stream& os, const __RolandSysexHdr& hdr);
-
-    } RolandSysexHdr;
-
-
+        friend Stream& operator >>(Stream& is, RolandSysexHdr& hdr);
+        friend Stream& operator <<(Stream& os, const RolandSysexHdr& hdr);
+    };
 }
 
 
