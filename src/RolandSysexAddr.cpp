@@ -1,45 +1,63 @@
 #include <midi/RolandSysexAddr.h>
+#include <StreamOperators.h>
+namespace MIDI {
 
-using namespace MIDI;
+    Stream& operator << (Stream& os, const RolandSysexAddr& addr) {
+        uint32_t val = addr.get();
 
-RolandSysexAddr::RolandSysexAddr() {
-    this->addr = 0;
-}
+        os << addr.get7bitHSB();
+        os << addr.get7bitMSB();
+        os << addr.get7bitLSB();
 
-RolandSysexAddr::RolandSysexAddr(const uint32_t addr) {
-    set(addr);
-}
+        return os;
+    }
 
-RolandSysexAddr::RolandSysexAddr(const uint8_t addr[3]) {
-    write(addr);
-}
+    Stream& operator >> (Stream& is, RolandSysexAddr& addr) {
 
-uint32_t RolandSysexAddr::get() const {
-    return addr;
-}
+        uint8_t value[3] = {0};
+        uint32_t val;
+        is.readBytes(value, 3);
 
-void RolandSysexAddr::set(const uint32_t val) {
-    addr = 0x1FFFFF & val;
-}
+        val = ((value[0] & 0x7F) << 14) | ((value[1] & 0x7F) << 7) | (value[2] & 0x7F);
+        addr.set(val);
 
-void RolandSysexAddr::write(const uint8_t value[3]) {
-    addr = ((value[0] & 0x7F) << 14) | ((value[1] & 0x7F) << 7) | (value[2] & 0x7F);
-}
+        return is;
+    }
 
-void RolandSysexAddr::read(uint8_t value[3]) const {
-    value[0] = get7bitHSB();
-    value[1] = get7bitMSB();
-    value[2] = get7bitLSB();
-}
+    RolandSysexChecksum& operator<<(RolandSysexChecksum& chksum, const RolandSysexAddr& addr) {
+        chksum << addr.get7bitHSB();
+        chksum << addr.get7bitMSB();
+        chksum << addr.get7bitLSB();
 
-uint8_t RolandSysexAddr::get7bitHSB() const {
-    return ((addr >> 14) & 0x7F);
-}
+        return chksum;
+    }
 
-uint8_t RolandSysexAddr::get7bitMSB() const {
-    return ((addr >> 7) & 0x7F);
-}
+    RolandSysexAddr::RolandSysexAddr() {
+        this->_addr = 0;
+    }
 
-uint8_t RolandSysexAddr::get7bitLSB() const {
-    return (addr & 0x7F);
+    RolandSysexAddr::RolandSysexAddr(const uint32_t addr) {
+        set(addr);
+    }
+
+    uint32_t RolandSysexAddr::get() const {
+        return _addr;
+    }
+
+    void RolandSysexAddr::set(const uint32_t val) {
+        _addr = 0x1FFFFF & val;
+    }
+
+    uint8_t RolandSysexAddr::get7bitHSB() const {
+        return (uint8_t)((_addr >> 14) & 0x7F);
+    }
+    
+    uint8_t RolandSysexAddr::get7bitMSB() const {
+        return (uint8_t)((_addr >> 7) & 0x7F);
+    }
+
+    uint8_t RolandSysexAddr::get7bitLSB() const {
+        return (uint8_t)(_addr & 0x7F);
+    }
+
 }

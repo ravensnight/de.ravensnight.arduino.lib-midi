@@ -3,7 +3,7 @@
 
 #include <Arduino.h>
 #include <Stream.h>
-#include <Converter.h>
+#include <Buffer.h>
 #include <midi/MidiDevice.h>
 #include <mutex>
 
@@ -15,12 +15,10 @@ namespace MIDI {
             std::mutex bufferLock;
 
             uint8_t _cable;
-
-            size_t _outBufferSize;
-            uint8_t* _outBuffer;
+            Buffer _outBuffer;
 
             // write binary data to midi out for the cable configured.
-            size_t write(const uint8_t *buf, size_t size);
+            size_t write(uint8_t* buffer, size_t size);
 
         public:
 
@@ -51,24 +49,6 @@ namespace MIDI {
         void sendMidiContinue();
 
         /**
-         * Send a sysex message using the given byte converter.
-         * 
-         * @param channel can be one of:
-         *  - the predefined manufacturer ID or 
-         *  - 0x00,  where buffer must contain first 2 bytes of a new-manufacturer ID
-         *  - 0x7E for Non-Realtime Messages or 
-         *  - 0x7F for Realtime messages
-         *  - any other specific ID.
-         * 
-         * @param buffer holds the bytes to be converted and sent
-         * @param len informs about the number of bytes to read from buffer.
-         * 
-         * @return the number of bytes sent.
-         * 
-         */
-        size_t sendSysEx(uint8_t channel, uint8_t payload[], uint16_t len);
-
-        /**
          * Send a sysex message as raw bytes. 
          * Note: 
          * The given input data is expected to contain 7bit data up to number 127 (7F).
@@ -82,12 +62,10 @@ namespace MIDI {
          *  - any other specific ID.
          * 
          * @param buffer holds the bytes to be converted and sent
-         * @param len informs about the number of bytes to read from buffer.
-         * 
          * @return the number of bytes sent.
          * 
          */
-        size_t sendSysEx(uint8_t channel, uint8_t payload[], uint16_t len, Converter& converter);
+        size_t sendSysEx(uint8_t channel, Buffer& buffer);
 
     };
 

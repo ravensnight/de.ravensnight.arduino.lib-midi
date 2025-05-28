@@ -2,6 +2,8 @@
 #include <midi/MidiDevice.h>
 #include <midi/MidiTransmitter.h>
 #include <Masquerade.h>
+#include <BufferOutputStream.h>
+#include <BufferInputStream.h>
 #include <Logger.h>
 
 using namespace MIDI;
@@ -9,21 +11,19 @@ using namespace LOGGING;
 
 MidiTransmitter::MidiTransmitter(uint8_t cable, size_t bufferSize) {  
     _cable = cable;
-    _outBufferSize = bufferSize;
-    _outBuffer = (uint8_t*)malloc(bufferSize);
+    _outBuffer = Buffer(bufferSize);
 }
 
 MidiTransmitter::MidiTransmitter(MidiTransmitter& source) {  
     _cable = source._cable;
-    _outBufferSize = source._outBufferSize;
-    _outBuffer = (uint8_t*)malloc(_outBufferSize);
+    _outBuffer = Buffer(source._outBuffer.bytes(), source._outBuffer.length());
 }
 
 MidiTransmitter::~MidiTransmitter() {    
-    free(_outBuffer);
+    _outBuffer.destroy();
 }
 
-size_t MidiTransmitter::write(const uint8_t *buf, size_t size) {
+size_t MidiTransmitter::write(uint8_t* buf, size_t size) {
     int len = 0;
 
     if (!MidiDevice::instance.available()) {
@@ -31,7 +31,7 @@ size_t MidiTransmitter::write(const uint8_t *buf, size_t size) {
         return 0;
     }
     
-    do {
+    do {        
         len += tud_midi_n_stream_write(0, this->_cable, buf + len, size - len);
         Logger::debug("Stream::write - write buffer of size: %d, sent: %d", size, len);
     } while (len < size);
@@ -136,30 +136,24 @@ void MidiTransmitter::sendMidiContinue() {
     send(MessageType::MidiContinue, 0, 0, 0);
 }
 
-size_t MidiTransmitter::sendSysEx(uint8_t channel, uint8_t payload[], uint16_t len, Converter& converter) {
+size_t MidiTransmitter::sendSysEx(uint8_t channel, Buffer& message) {
     std::lock_guard<std::mutex> lock(bufferLock);
 
-    size_t payloadSize = converter.getEncodedSize(len);
-    uint16_t size = payloadSize + 3;
-
-    if (size > _outBufferSize) {
-        Logger::error("MidiTransmitter::sendSysEx - outbuffer size %d exceeded by payload size %d(%d). Cannot send sysex!", _outBufferSize, size, len);
+    uint16_t size = message.length() + 3; // + begin + channel + end
+    if (size > _outBuffer.length()) {
+        Logger::error("MidiTransmitter::sendSysEx - outbuffer size %d exceeded by payload size %d(%d). Cannot send sysex!", _outBuffer.length(), size, message.length());
         return -1;
     }
-    
-    _outBuffer[0] = (uint8_t)MessageType::SysExStart;
-    _outBuffer[1] = channel;
 
-    converter.encode(_outBuffer + 2, payloadSize, payload, len);
-    _outBuffer[payloadSize + 2] = (uint8_t)MessageType::SysExEnd;
+    BufferOutputStream os(_outBuffer.bytes(), size);
+
+    os << (uint8_t)MessageType::SysExStart;
+    os << channel;
+    os << message;
+    os << (uint8_t)MessageType::SysExEnd;
     
-    Logger::dump("Send SysEx bytes: ", _outBuffer, size, 0);
-    write(_outBuffer, size);    
+    Logger::dump("Send SysEx bytes: ", _outBuffer.bytes(), size, 0);
+    write(_outBuffer.bytes(), size);
 
     return size;
-}
-
-size_t MidiTransmitter::sendSysEx(uint8_t channel, uint8_t payload[], uint16_t len) {
-    Masquerade conv = Masquerade();
-    return sendSysEx(channel, payload, len, conv);
 }

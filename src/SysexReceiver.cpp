@@ -1,5 +1,6 @@
 #include <midi/SysexReceiver.h>
-#include <ByteInputStream.h>
+#include <Buffer.h>
+#include <BufferInputStream.h>
 #include <Logger.h>
 
 using namespace MIDI;
@@ -7,31 +8,29 @@ using namespace LOGGING;
 
 SysexReceiver::SysexReceiver(size_t bufferSize, SysexHandler* handler) {
     _handler = handler;
-    _buffer = (uint8_t*)malloc(bufferSize);
-    _bufferLen = bufferSize;
-    _bufferPos = 0;
+    _buffer = Buffer(bufferSize);
+    _msgLen = 0;
 }
 
 SysexReceiver::~SysexReceiver() {
-    free(_buffer);
+    _buffer.destroy();
 }
 
 void SysexReceiver::reset() {
-    _bufferPos = 0;
     _state = SysexState::WAITING;
+    _msgLen = 0;
 }
 
 bool SysexReceiver::append(const uint8_t* msg, size_t len) {
+    size_t avail = _buffer.length() - _msgLen;
 
-    if (_bufferPos + len > _bufferLen) {
+    if (avail < len) {
         Logger::warn("SysexReceiver::handle - Buffer overrun. Reset.", len);
         reset();
         return false;
     }
 
-    memcpy((_buffer + _bufferPos), msg, len);
-    _bufferPos += len;
-
+    _msgLen += _buffer.set(_msgLen, msg, len);
     return true;
 }
 
@@ -110,11 +109,10 @@ void SysexReceiver::handle(CINType type, const uint8_t* msg, size_t len) {
 
         // trigger an action.
         if (trigger) {
-            Logger::dump("Midi message buffer is:", _buffer, _bufferPos, 0);
-
-            ByteInputStream* inputStream = new ByteInputStream(_buffer, _bufferPos);                           
+            Logger::dump("Midi message buffer is:", _buffer.bytes(), _msgLen, 0);
+            BufferInputStream inputStream(_buffer.bytes(), _msgLen);             
+                          
             _handler->onSysEx(inputStream);
-            delete inputStream;
             reset();
         }
     }   

@@ -4,6 +4,7 @@
 #include <midi/MidiTransmitter.h>
 #include <midi/SysexHandler.h>
 #include <midi/RolandSysexCallback.h>
+#include <Converter.h>
 
 namespace MIDI {
 
@@ -15,7 +16,7 @@ namespace MIDI {
             ~RolandSysexHandler();
 
             // implements function from SysexHandler
-            void onSysEx(ByteInputStream* inputStream);
+            void onSysEx(BufferInputStream& inputStream);
 
         private:
 
@@ -27,15 +28,9 @@ namespace MIDI {
              * Parse a message from Midi In-Stream and potentially respond to writer.
              * Returns the number of bytes read or sent as payload or -1, if address was invalid or message could not be parsed correctly.
              */
-            int handleSysEx(ByteInputStream* inputStream);
-            int handleCmdRead(RolandSysexAddr& addr, ByteInputStream* inputStream);
-            int handleCmdWrite(RolandSysexAddr& addr, ByteInputStream* inputStream);
-
-            /**
-             * Calculate the checksum
-             */
-            static uint8_t checksum(RolandSysexAddr& addr, uint8_t* bytes, uint16_t len);
-            static void checksumAdd(int& previous, uint8_t value);
+            int handleSysEx(BufferInputStream& inputStream);
+            int handleCmdRead(RolandSysexAddr& addr, BufferInputStream& inputStream);
+            int handleCmdWrite(RolandSysexAddr& addr, BufferInputStream& inputStream);
 
     };
 }

@@ -16,9 +16,9 @@ namespace MIDI {
         private:
 
             SysexState _state = SysexState::WAITING;
-            uint8_t* _buffer = 0;
-            size_t _bufferLen = 0;
-            size_t _bufferPos = 0;
+            
+            Buffer _buffer;
+            size_t _msgLen;
 
             SysexHandler* _handler;
 

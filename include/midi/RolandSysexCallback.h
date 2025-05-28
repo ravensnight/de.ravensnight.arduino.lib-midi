@@ -37,12 +37,12 @@ namespace MIDI {
             /**
              * Apply the data which has been received from sysex
              */
-            virtual void writeToModel(const RolandSysexAddr& addr, const uint8_t buffer[], uint16_t size) = 0;
+            virtual void writeToModel(const RolandSysexAddr& addr, Buffer& buffer) = 0;
 
             /**
              * Read some data from addr and provide it to buffer.
              */
-            virtual void readFromModel(const RolandSysexAddr& addr, uint8_t buffer[], uint16_t size) = 0;
+            virtual void readFromModel(const RolandSysexAddr& addr, Buffer& buffer) = 0;
 
     };
 

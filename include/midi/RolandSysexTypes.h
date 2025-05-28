@@ -5,8 +5,6 @@
 
 #include <midi/RolandSysexAddr.h>
 
-#include <ByteInputStream.h>
-#include <ByteOutputStream.h>
 namespace MIDI {
 
     #define ROLAND_SYSEX_MAN_CODE   0x41
@@ -35,9 +33,7 @@ namespace MIDI {
         uint16_t index;     // the record number, this info belongs to.
         uint16_t size;      // the size of the record
         RolandSysexAddr addr;    // the address of the record.
-
     } RecordInfo;
-
 }
 
 #endif // __ROLAND_SYSEX_H__

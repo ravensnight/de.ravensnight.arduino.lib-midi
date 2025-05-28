@@ -1,4 +1,5 @@
 #include <midi/RolandSysexHdr.h>
+#include <midi/RolandSysexAddr.h>
 
 namespace MIDI {
 
@@ -6,7 +7,7 @@ namespace MIDI {
         is >> hdr.device;
         is >> hdr.model;
         is >> hdr.cmd;
-        is.readBytes(hdr.addr, 3);
+        is >> hdr.addr;
 
         return is;
     }
@@ -15,9 +16,7 @@ namespace MIDI {
         os << hdr.device;
         os << hdr.model;
         os << hdr.cmd;
-        os << hdr.addr[0];
-        os << hdr.addr[1];
-        os << hdr.addr[2];
+        os << hdr.addr;
 
         return os;
     }

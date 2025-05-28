@@ -2,7 +2,7 @@
 #define __SYSEX_HANDLER_H__
 
 #include <Arduino.h>
-#include <ByteInputStream.h>
+#include <BufferInputStream.h>
 
 namespace MIDI {
 
@@ -10,7 +10,7 @@ namespace MIDI {
     class SysexHandler {
 
         public:
-            virtual void onSysEx(ByteInputStream* inputStream) = 0;
+            virtual void onSysEx(BufferInputStream& inputStream) = 0;
 
     };
 

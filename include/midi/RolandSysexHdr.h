@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 #include <StreamOperators.h>
+#include <midi/RolandSysexAddr.h>
 
 namespace MIDI {
 
@@ -12,7 +13,7 @@ namespace MIDI {
         uint8_t device;
         uint8_t model;
         uint8_t cmd;             
-        uint8_t addr[3];
+        RolandSysexAddr addr;
 
         friend Stream& operator >>(Stream& is, RolandSysexHdr& hdr);
         friend Stream& operator <<(Stream& os, const RolandSysexHdr& hdr);
