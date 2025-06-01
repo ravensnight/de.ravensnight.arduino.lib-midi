@@ -4,7 +4,7 @@
 #include <Arduino.h>
 #include <BufferInputStream.h>
 
-namespace MIDI {
+namespace ravensnight::midi {
 
     // Sysex Handler declaration
     class SysexHandler {

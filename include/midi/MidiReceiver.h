@@ -4,7 +4,7 @@
 #include <Arduino.h>
 #include <midi/MidiCommon.h>
 
-namespace MIDI {
+namespace ravensnight::midi {
     
     class MidiReceiver {
 

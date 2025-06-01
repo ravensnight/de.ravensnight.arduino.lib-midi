@@ -2,8 +2,8 @@
 #include <Logger.h>
 #include <midi/MidiDevice.h>
 
-using namespace MIDI;
-using namespace LOGGING;
+using namespace ravensnight::midi;
+using namespace ravensnight::logging;
 
 #ifndef MIDI_ENDPOINT_NUMBER 
     #define MIDI_ENDPOINT_NUMBER 1

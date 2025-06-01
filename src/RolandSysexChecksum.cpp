@@ -1,9 +1,9 @@
 #include <midi/RolandSysexChecksum.h>
 #include <Logger.h>
 
-using namespace LOGGING;
+using namespace ravensnight::logging;
 
-namespace MIDI {
+namespace ravensnight::midi {
 
     RolandSysexChecksum::RolandSysexChecksum() {
         _value = 0;

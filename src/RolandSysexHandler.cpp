@@ -10,8 +10,8 @@
 #include <Base128.h>
 #include <Logger.h>
 
-using namespace MIDI;
-using namespace LOGGING;
+using namespace ravensnight::midi;
+using namespace ravensnight::logging;
 
 RolandSysexHandler::RolandSysexHandler(RolandSysexCallback* cb, MidiTransmitter* writer) {
     _cb = cb;

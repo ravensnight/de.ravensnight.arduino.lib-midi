@@ -7,7 +7,7 @@
 #include <Converter.h>
 #include <mutex>
 
-namespace MIDI {
+namespace ravensnight::midi {
 
     class RolandSysexHandler : public SysexHandler {
 

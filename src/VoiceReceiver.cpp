@@ -1,8 +1,8 @@
 #include <midi/VoiceReceiver.h>
 #include <Logger.h>
 
-using namespace LOGGING;
-using namespace MIDI;
+using namespace ravensnight::logging;
+using namespace ravensnight::midi;
 
 VoiceReceiver::VoiceReceiver(VoiceCallback* cb) {
     _cb = cb;

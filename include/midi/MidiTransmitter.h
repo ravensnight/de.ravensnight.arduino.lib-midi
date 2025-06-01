@@ -7,7 +7,8 @@
 #include <midi/MidiDevice.h>
 #include <mutex>
 
-namespace MIDI {
+using namespace ravensnight::utils;
+namespace ravensnight::midi {
 
     class MidiTransmitter {
 

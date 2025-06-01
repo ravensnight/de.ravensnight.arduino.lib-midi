@@ -3,7 +3,7 @@
 
 #include <Arduino.h>
 
-namespace MIDI {
+namespace ravensnight::midi {
 
     #define __14bit(hsb, lsb)   ((uint16_t)((hsb & 0x7F) << 7) | (lsb & 0x7F))
     #define __buffer(ptr)       ((uint8_t*)ptr)

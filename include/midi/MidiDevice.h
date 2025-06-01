@@ -9,7 +9,7 @@
 
 #include <midi/MidiCommon.h>
 #include <midi/MidiReceiver.h>
-namespace MIDI {
+namespace ravensnight::midi {
 
 #define MAX_CABLE_NAMELEN 25
 #ifndef MAX_CABLE_COUNT

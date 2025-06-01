@@ -3,7 +3,7 @@
 
 #include <Arduino.h>
 #include <midi/RolandSysexChecksum.h>
-namespace MIDI {
+namespace ravensnight::midi {
 
     class RolandSysexAddr {
         private:

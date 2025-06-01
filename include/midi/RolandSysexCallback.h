@@ -4,7 +4,7 @@
 #include <Arduino.h>
 #include <midi/RolandSysexTypes.h>
 
-namespace MIDI {
+namespace ravensnight::midi {
 
     class RolandSysexCallback {
         public:

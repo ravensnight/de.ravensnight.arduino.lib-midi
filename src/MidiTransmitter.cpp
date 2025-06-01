@@ -6,8 +6,8 @@
 #include <BufferInputStream.h>
 #include <Logger.h>
 
-using namespace MIDI;
-using namespace LOGGING;
+using namespace ravensnight::midi;
+using namespace ravensnight::logging;
 
 MidiTransmitter::MidiTransmitter(uint8_t cable, size_t bufferSize) {  
     _cable = cable;

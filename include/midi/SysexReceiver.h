@@ -5,7 +5,8 @@
 #include <midi/SysexHandler.h>
 #include <mutex>
 
-namespace MIDI {
+using namespace ravensnight::utils;
+namespace ravensnight::midi {
 
     enum class SysexState : uint8_t {
         WAITING = 0,

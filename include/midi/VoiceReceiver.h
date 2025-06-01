@@ -4,7 +4,7 @@
 #include <midi/MidiReceiver.h>
 #include <midi/VoiceCallback.h>
 
-namespace MIDI {
+namespace ravensnight::midi {
 
     class VoiceReceiver : public MidiReceiver {
 

@@ -5,7 +5,7 @@
 
 #include <midi/RolandSysexAddr.h>
 
-namespace MIDI {
+namespace ravensnight::midi {
 
     #define ROLAND_SYSEX_MAN_CODE   0x41
     #define ROLAND_SYSEX_HDR_SIZE   6

@@ -2,8 +2,8 @@
 #include <StreamOperators.h>
 #include <Logger.h>
 
-using namespace LOGGING;
-namespace MIDI {
+using namespace ravensnight::logging;
+namespace ravensnight::midi {
 
     Stream& operator << (Stream& os, const RolandSysexAddr& addr) {
         uint32_t val = addr.get();

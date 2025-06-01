@@ -3,8 +3,8 @@
 #include <BufferInputStream.h>
 #include <Logger.h>
 
-using namespace MIDI;
-using namespace LOGGING;
+using namespace ravensnight::midi;
+using namespace ravensnight::logging;
 
 SysexReceiver::SysexReceiver(size_t bufferSize, SysexHandler* handler) {
     _handler = handler;

@@ -5,7 +5,7 @@
 #include <StreamOperators.h>
 #include <midi/RolandSysexAddr.h>
 
-namespace MIDI {
+namespace ravensnight::midi {
 
     class RolandSysexHdr {
         public:

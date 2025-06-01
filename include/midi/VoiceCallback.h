@@ -3,7 +3,7 @@
 
 #include <Arduino.h>
 
-namespace MIDI {
+namespace ravensnight::midi {
 
     class VoiceCallback {
 

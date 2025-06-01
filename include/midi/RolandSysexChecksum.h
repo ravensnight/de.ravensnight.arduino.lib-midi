@@ -4,7 +4,8 @@
 #include <Arduino.h>
 #include <Buffer.h>
 
-namespace MIDI {
+using namespace ravensnight::utils;
+namespace ravensnight::midi {
 
     class RolandSysexChecksum {
 

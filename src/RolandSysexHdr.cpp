@@ -1,7 +1,7 @@
 #include <midi/RolandSysexHdr.h>
 #include <midi/RolandSysexAddr.h>
 
-namespace MIDI {
+namespace ravensnight::midi {
 
     Stream& operator >>(Stream& is, RolandSysexHdr& hdr) {
         is >> hdr.device;
