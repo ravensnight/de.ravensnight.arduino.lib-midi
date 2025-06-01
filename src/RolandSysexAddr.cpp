@@ -1,5 +1,8 @@
 #include <midi/RolandSysexAddr.h>
 #include <StreamOperators.h>
+#include <Logger.h>
+
+using namespace LOGGING;
 namespace MIDI {
 
     Stream& operator << (Stream& os, const RolandSysexAddr& addr) {
@@ -25,9 +28,12 @@ namespace MIDI {
     }
 
     RolandSysexChecksum& operator<<(RolandSysexChecksum& chksum, const RolandSysexAddr& addr) {
-        chksum << addr.get7bitHSB();
-        chksum << addr.get7bitMSB();
-        chksum << addr.get7bitLSB();
+
+        Logger::debug("Add address to checksum: %06x", addr.get());
+
+        chksum.add(addr.get7bitHSB());
+        chksum.add(addr.get7bitMSB());
+        chksum.add(addr.get7bitLSB());
 
         return chksum;
     }

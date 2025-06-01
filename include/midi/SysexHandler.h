@@ -10,7 +10,7 @@ namespace MIDI {
     class SysexHandler {
 
         public:
-            virtual void onSysEx(BufferInputStream& inputStream) = 0;
+            virtual void onSysEx(const uint8_t* message, size_t len) = 0;
 
     };
 

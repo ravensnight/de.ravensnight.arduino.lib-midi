@@ -8,6 +8,7 @@ using namespace LOGGING;
 
 SysexReceiver::SysexReceiver(size_t bufferSize, SysexHandler* handler) {
     _handler = handler;
+    Logger::info("SysexReceiver buffer size is %d", bufferSize);
     _buffer = Buffer(bufferSize);
     _msgLen = 0;
 }
@@ -21,84 +22,86 @@ void SysexReceiver::reset() {
     _msgLen = 0;
 }
 
-bool SysexReceiver::append(const uint8_t* msg, size_t len) {
+bool SysexReceiver::append(const MidiEvent& evt) {
     size_t avail = _buffer.length() - _msgLen;
 
-    if (avail < len) {
-        Logger::warn("SysexReceiver::handle - Buffer overrun. Reset.", len);
+    if (avail < evt.msgLength) {
+        Logger::warn("SysexReceiver::handle - Buffer overrun. Reset.", evt.msgLength);
         reset();
         return false;
     }
 
-    _msgLen += _buffer.set(_msgLen, msg, len);
+    _msgLen += _buffer.set(_msgLen, evt.msg, evt.msgLength);
+    Logger::debug("SysexReceiver::apppend - new msg length = %d", _msgLen);
     return true;
 }
 
-void SysexReceiver::handle(CINType type, const uint8_t* msg, size_t len) {
+void SysexReceiver::handle(const MidiEvent& evt) {
+    const std::lock_guard<std::mutex> lock(_mutex);
 
     bool trigger = false;
 
     if (_state == SysexState::WAITING) {
-        if (len < 3) {
-            Logger::warn("SysexReceiver::handle - Unexpected size %d (required 3). Return.", len);
+        if (evt.msgLength < 3) {
+            Logger::warn("SysexReceiver::handle - Unexpected size %d (required 3). Return.", evt.msgLength);
             reset();
             return;    
         }
 
-        if ((type == CINType::SysexStart) && (msg[0] == 0xF0)) {
-            if (append(msg, 3)) {
+        if ((evt.type == CINType::SysexStart) && (evt.msg[0] == 0xF0)) {
+            if (append(evt)) {
                 _state = SysexState::READING;
             }
         }
     } else { // READING
 
-        switch (type) {
+        switch (evt.type) {
             case CINType::SysexStart:    // continue normally
             {
-                if (len < 3) {
-                    Logger::warn("SysexReceiver::handle - Unexpected size %d (required 3). Return.", len);
+                if (evt.msgLength < 3) {
+                    Logger::warn("SysexReceiver::handle - Unexpected size %d (required 3). Return.", evt.msgLength);
                     reset();
                     return;    
                 }
     
-                append(msg, 3);
+                append(evt);
                 trigger = false;
                 break;
             }
 
             case CINType::SysexEnd1:    // continue normally
             {
-                if (len < 1) {
-                    Logger::warn("SysexReceiver::handle - Unexpected size %d (required 1). Return.", len);
+                if (evt.msgLength < 1) {
+                    Logger::warn("SysexReceiver::handle - Unexpected size %d (required 1). Return.", evt.msgLength);
                     reset();
                     return;    
                 }
     
-                trigger = append(msg, 1);
+                trigger = append(evt);
                 break;
             }
 
             case CINType::SysexEnd2:    // continue normally
             {
-                if (len < 2) {
-                    Logger::warn("SysexReceiver::handle - Unexpected size %d (required 2). Return.", len);
+                if (evt.msgLength < 2) {
+                    Logger::warn("SysexReceiver::handle - Unexpected size %d (required 2). Return.", evt.msgLength);
                     reset();
                     return;    
                 }
     
-                trigger = append(msg, 2);
+                trigger = append(evt);
                 break;
             }
 
             case CINType::SysexEnd3:    // continue normally
             {
-                if (len < 3) {
-                    Logger::warn("SysexReceiver::handle - Unexpected size %d (required 3). Return.", len);
+                if (evt.msgLength < 3) {
+                    Logger::warn("SysexReceiver::handle - Unexpected size %d (required 3). Return.", evt.msgLength);
                     reset();
                     return;    
                 }
     
-                trigger = append(msg, 3);
+                trigger = append(evt);
                 break;
             }
 
@@ -109,10 +112,8 @@ void SysexReceiver::handle(CINType type, const uint8_t* msg, size_t len) {
 
         // trigger an action.
         if (trigger) {
-            Logger::dump("Midi message buffer is:", _buffer.bytes(), _msgLen, 0);
-            BufferInputStream inputStream(_buffer.bytes(), _msgLen);             
-                          
-            _handler->onSysEx(inputStream);
+            Logger::dump("Midi message buffer is:", _buffer.bytes(), _msgLen, 0);                          
+            _handler->onSysEx(_buffer.bytes(), _msgLen);
             reset();
         }
     }   

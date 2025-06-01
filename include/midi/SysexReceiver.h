@@ -3,6 +3,7 @@
 
 #include <midi/MidiReceiver.h>
 #include <midi/SysexHandler.h>
+#include <mutex>
 
 namespace MIDI {
 
@@ -17,19 +18,22 @@ namespace MIDI {
 
             SysexState _state = SysexState::WAITING;
             
+            std::mutex _mutex;
+
             Buffer _buffer;
             size_t _msgLen;
 
             SysexHandler* _handler;
 
-            bool append(const uint8_t* msg, size_t len);
+
+            bool append(const MidiEvent& evt);
 
         public:
 
             SysexReceiver(size_t bufferSize, SysexHandler* handler);
             ~SysexReceiver();
 
-            void handle(CINType type, const uint8_t* msg, size_t len);
+            void handle(const MidiEvent& event);
             void reset();
     };
 

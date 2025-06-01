@@ -1,4 +1,7 @@
 #include <midi/RolandSysexChecksum.h>
+#include <Logger.h>
+
+using namespace LOGGING;
 
 namespace MIDI {
 
@@ -12,7 +15,9 @@ namespace MIDI {
 
     uint8_t RolandSysexChecksum::value() const {
         int res = 128 - _value;
-        if (res == 128) res = 0;
+        if (res == 128) {
+            res = 0;
+        }
 
         return res;
     }
@@ -21,6 +26,12 @@ namespace MIDI {
         _value += val;
         if (_value > 127) {
             _value -= 128;
+        }
+    }
+
+    void RolandSysexChecksum::add(const uint8_t* buffer, size_t len) {
+        for (size_t i = 0; i < len; i++) {
+            add(buffer[i]);
         }
     }
 

@@ -17,6 +17,8 @@ namespace MIDI {
             RolandSysexChecksum();
 
             void add(uint8_t value);
+            void add(const uint8_t* buffer, size_t len);
+
             void reset();
 
             uint8_t value() const;

@@ -54,9 +54,15 @@ namespace MIDI {
         MidiContinue = 0xFB,
         MidiStop = 0xFC,
         ActiveSens = 0xFE,
-        Reset = 0xFF
-    
+        Reset = 0xFF    
     };
+
+    typedef struct {
+        CINType type;
+        uint8_t cable;
+        uint8_t msg[3];        
+        uint8_t msgLength;
+    } MidiEvent;
 
 }
 

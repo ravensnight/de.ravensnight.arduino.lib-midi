@@ -34,16 +34,16 @@ bool VoiceReceiver::accepted(CINType type) {
     }    
 }
 
-void VoiceReceiver::handle(CINType type, const uint8_t* buffer, size_t len) {
+void VoiceReceiver::handle(const MidiEvent& evt) {
 
-    if ((_cb == 0) || (!accepted(type)) || (len < 3)) {
-        Logger::warn("Cannot handle message: type=%d, len=%d", type, len);
+    if ((_cb == 0) || (!accepted(evt.type)) || (evt.msgLength < 3)) {
+        Logger::warn("Cannot handle message: type=%d, len=%d", evt.type, evt.msgLength);
         return;
     }
 
-    uint8_t status = buffer[0];
-    uint8_t value1 = buffer[1];
-    uint8_t value2 = buffer[2];
+    uint8_t status = evt.msg[0];
+    uint8_t value1 = evt.msg[1];
+    uint8_t value2 = evt.msg[2];
 
     MessageType command = MessageType::Reset;
     uint8_t channel = 0;

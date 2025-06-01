@@ -19,7 +19,7 @@ namespace MIDI {
             VoiceReceiver(VoiceCallback* cb);
             ~VoiceReceiver();
 
-            void handle(CINType type, const uint8_t* msg, size_t len);
+            void handle(const MidiEvent& event);
     };
 
 }

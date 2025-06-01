@@ -2,12 +2,13 @@
 #define __MIDI_H__
 
 #include <Arduino.h>
+#include <mutex>
 #include <Stream.h>
 #include <esp32-hal-tinyusb.h>
 #include <USB.h>
 
 #include <midi/MidiCommon.h>
-
+#include <midi/MidiReceiver.h>
 namespace MIDI {
 
 #define MAX_CABLE_NAMELEN 25
@@ -30,22 +31,22 @@ typedef struct {
     const char* serial;
 } USBConfig;
 
-
-typedef void (*MidiCallback)(uint8_t cable, CINType type, const uint8_t* msg, size_t len);
-
 typedef struct {
     char name[MAX_CABLE_NAMELEN + 1] = { 0 };
-    MidiCallback callback = 0;
+    MidiReceiver* receiver = 0;
 } CableDef ;
 
 class MidiDevice {
 
     private:
 
-        static bool _available;
         static uint8_t cableCount;
-        static uint8_t nameIndex;
         static CableDef cables[MAX_CABLE_COUNT];
+
+        static std::mutex _mutex;
+        static bool _available;
+        static uint8_t nameIndex;
+        static uint8_t _packet[4];
 
         static void usbCallback(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data);
         static uint16_t descriptorCallback(uint8_t* dst, uint8_t * itf);
@@ -64,7 +65,7 @@ class MidiDevice {
         static MidiDevice instance;
 
         // add a cable with name. return the index of the cable or -1 if entry could not be created.
-        int8_t attach(const char* cableName, MidiCallback cb);
+        int8_t attach(const char* cableName, MidiReceiver* q);
 
         // install this interface to USB
         void setup(const USBConfig& config);
@@ -72,7 +73,7 @@ class MidiDevice {
         // check, if midi device is available.
         bool available();
 
-        // read midi input buffer(s)
+        // read midi input into given queue. 
         void readInput();
 
 };

@@ -5,6 +5,7 @@
 #include <midi/SysexHandler.h>
 #include <midi/RolandSysexCallback.h>
 #include <Converter.h>
+#include <mutex>
 
 namespace MIDI {
 
@@ -16,10 +17,11 @@ namespace MIDI {
             ~RolandSysexHandler();
 
             // implements function from SysexHandler
-            void onSysEx(BufferInputStream& inputStream);
+            void onSysEx(const uint8_t* buffer, size_t len);
 
         private:
 
+            std::mutex _mutex;
             MidiTransmitter* _out;
             RolandSysexCallback* _cb;
             Converter* _conv[2];
@@ -28,7 +30,7 @@ namespace MIDI {
              * Parse a message from Midi In-Stream and potentially respond to writer.
              * Returns the number of bytes read or sent as payload or -1, if address was invalid or message could not be parsed correctly.
              */
-            int handleSysEx(BufferInputStream& inputStream);
+            int handleSysEx(const uint8_t* buffer, size_t len);
             int handleCmdRead(RolandSysexAddr& addr, BufferInputStream& inputStream);
             int handleCmdWrite(RolandSysexAddr& addr, BufferInputStream& inputStream);
 

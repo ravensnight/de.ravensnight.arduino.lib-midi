@@ -103,13 +103,13 @@ uint16_t MidiDevice::descriptorCallback(uint8_t * dst, uint8_t * itf) {
     return len;
 }
 
-int8_t MidiDevice::attach(const char* name, MidiCallback cb) {
+int8_t MidiDevice::attach(const char* name, MidiReceiver* receiver) {
     if (cableCount < MAX_CABLE_COUNT) {        
 
         CableDef& def = cables[cableCount];
 
         strncpy(def.name, name, MAX_CABLE_NAMELEN);
-        def.callback = cb;
+        def.receiver = receiver;
         cableCount++;
 
         return (cableCount - 1);
@@ -188,25 +188,28 @@ uint8_t MidiDevice::getPacketLen(CINType tp) {
 }
 
 void MidiDevice::readInput() {
+    const std::lock_guard<std::mutex> lock(_mutex);
 
-    uint8_t packet[4];
+    MidiEvent event;
+    while (tud_midi_n_packet_read(0, _packet)) {
 
-    while (tud_midi_n_packet_read(0, packet)) {
+        uint8_t header = _packet[0];
+        event.cable = (header >> 4);
+        event.type = (CINType)(0x0F & header);
 
-        uint8_t header = packet[0];
-        uint8_t cable = (header >> 4);
-        Logger::debug("Received midi packet for pipe %d, cin: %02x", cable, (header & 0x0F));
+        //Logger::debug("Received midi packet for pipe %d, cin: %02x", event.cable, event.type);
 
-        CINType type = (CINType)(0x0F & header);
 
-        if (cable < cableCount) {
-            uint8_t len = getPacketLen(type);
+        if (event.cable < cableCount) {            
+            event.msgLength = getPacketLen(event.type);
+            memcpy(event.msg, _packet + 1, event.msgLength);
 
-            Logger::debug("Midi packet size: %d", len);
-            cables[cable].callback(cable, type, (packet + 1), len);
+            Logger::debug("Received midi packet cable: %d, type: %d size: %d", event.cable, event.type, event.msgLength);
+            Logger::dump("Midi packet msg: ", event.msg, event.msgLength, 0);
+
+            cables[event.cable].receiver->handle(event);
         }
     }
-
 }
 
 MidiDevice MidiDevice::instance = MidiDevice();
@@ -216,3 +219,5 @@ bool MidiDevice::_available = false;
 uint8_t MidiDevice::cableCount = 0;
 uint8_t MidiDevice::nameIndex = 0;
 CableDef MidiDevice::cables[MAX_CABLE_COUNT];
+std::mutex MidiDevice::_mutex;
+uint8_t MidiDevice::_packet[4] = { 0 };
