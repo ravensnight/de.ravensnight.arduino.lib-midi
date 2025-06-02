@@ -10,6 +10,8 @@
             "includePath": [
                 "g:/dev/RN-MC1210F/de.ravensnight.arduino.lib-midi/include",
                 "g:/dev/RN-MC1210F/de.ravensnight.arduino.lib-midi/src",
+                "g:/dev/RN-MC1210F/de.ravensnight.arduino.lib-midi/.pio/libdeps/lib-midi/ravensnight lib-async/include",
+                "g:/dev/RN-MC1210F/de.ravensnight.arduino.lib-midi/.pio/libdeps/lib-midi/ravensnight lib-async/src",
                 "g:/dev/RN-MC1210F/de.ravensnight.arduino.lib-midi/.pio/libdeps/lib-midi/ravensnight lib-utils/include",
                 "g:/dev/RN-MC1210F/de.ravensnight.arduino.lib-midi/.pio/libdeps/lib-midi/ravensnight lib-utils/src",
                 "g:/dev/RN-MC1210F/de.ravensnight.arduino.lib-midi/.pio/libdeps/lib-midi/ravensnight lib-logging/include",
@@ -253,6 +255,8 @@
                 "path": [
                     "g:/dev/RN-MC1210F/de.ravensnight.arduino.lib-midi/include",
                     "g:/dev/RN-MC1210F/de.ravensnight.arduino.lib-midi/src",
+                    "g:/dev/RN-MC1210F/de.ravensnight.arduino.lib-midi/.pio/libdeps/lib-midi/ravensnight lib-async/include",
+                    "g:/dev/RN-MC1210F/de.ravensnight.arduino.lib-midi/.pio/libdeps/lib-midi/ravensnight lib-async/src",
                     "g:/dev/RN-MC1210F/de.ravensnight.arduino.lib-midi/.pio/libdeps/lib-midi/ravensnight lib-utils/include",
                     "g:/dev/RN-MC1210F/de.ravensnight.arduino.lib-midi/.pio/libdeps/lib-midi/ravensnight lib-utils/src",
                     "g:/dev/RN-MC1210F/de.ravensnight.arduino.lib-midi/.pio/libdeps/lib-midi/ravensnight lib-logging/include",

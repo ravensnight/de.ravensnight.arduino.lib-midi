@@ -1,4 +1,6 @@
 #include <midi/SysexReceiver.h>
+#include <async/LockGuard.h>
+
 #include <Buffer.h>
 #include <BufferInputStream.h>
 #include <Logger.h>
@@ -6,7 +8,7 @@
 using namespace ravensnight::midi;
 using namespace ravensnight::logging;
 
-SysexReceiver::SysexReceiver(size_t bufferSize, SysexHandler* handler) {
+SysexReceiver::SysexReceiver(size_t bufferSize, SysexHandler* handler) : _mutex("SysexReceiver") {
     _handler = handler;
     Logger::info("SysexReceiver buffer size is %d", bufferSize);
     _buffer = Buffer(bufferSize);
@@ -17,12 +19,18 @@ SysexReceiver::~SysexReceiver() {
     _buffer.destroy();
 }
 
-void SysexReceiver::reset() {
+void SysexReceiver::unsafeReset() {
+    Logger::debug("SysexReceiver::reset");
     _state = SysexState::WAITING;
     _msgLen = 0;
 }
 
-bool SysexReceiver::append(const MidiEvent& evt) {
+void SysexReceiver::reset() {
+    synchronized(_mutex);
+    unsafeReset();
+}
+
+bool SysexReceiver::unsafeAppend(const MidiEvent& evt) {
     size_t avail = _buffer.length() - _msgLen;
 
     if (avail < evt.msgLength) {
@@ -32,24 +40,23 @@ bool SysexReceiver::append(const MidiEvent& evt) {
     }
 
     _msgLen += _buffer.set(_msgLen, evt.msg, evt.msgLength);
-    Logger::debug("SysexReceiver::apppend - new msg length = %d", _msgLen);
+    // Logger::debug("SysexReceiver::apppend - new msg length = %d", _msgLen);
     return true;
 }
 
 void SysexReceiver::handle(const MidiEvent& evt) {
-    const std::lock_guard<std::mutex> lock(_mutex);
+    synchronized(_mutex);
 
     bool trigger = false;
-
     if (_state == SysexState::WAITING) {
         if (evt.msgLength < 3) {
             Logger::warn("SysexReceiver::handle - Unexpected size %d (required 3). Return.", evt.msgLength);
-            reset();
+            unsafeReset();
             return;    
         }
 
         if ((evt.type == CINType::SysexStart) && (evt.msg[0] == 0xF0)) {
-            if (append(evt)) {
+            if (unsafeAppend(evt)) {
                 _state = SysexState::READING;
             }
         }
@@ -64,7 +71,7 @@ void SysexReceiver::handle(const MidiEvent& evt) {
                     return;    
                 }
     
-                append(evt);
+                unsafeAppend(evt);
                 trigger = false;
                 break;
             }
@@ -77,7 +84,7 @@ void SysexReceiver::handle(const MidiEvent& evt) {
                     return;    
                 }
     
-                trigger = append(evt);
+                trigger = unsafeAppend(evt);
                 break;
             }
 
@@ -89,7 +96,7 @@ void SysexReceiver::handle(const MidiEvent& evt) {
                     return;    
                 }
     
-                trigger = append(evt);
+                trigger = unsafeAppend(evt);
                 break;
             }
 
@@ -101,20 +108,20 @@ void SysexReceiver::handle(const MidiEvent& evt) {
                     return;    
                 }
     
-                trigger = append(evt);
+                trigger = unsafeAppend(evt);
                 break;
             }
 
             default:
-                reset();
+                unsafeReset();
                 break;
         }
 
         // trigger an action.
         if (trigger) {
-            Logger::dump("Midi message buffer is:", _buffer.bytes(), _msgLen, 0);                          
+            // Logger::dump("Midi message buffer is:", _buffer.bytes(), _msgLen, 0);    
             _handler->onSysEx(_buffer.bytes(), _msgLen);
-            reset();
+            unsafeReset();
         }
     }   
 }

@@ -4,11 +4,16 @@
 #include <midi/MidiReceiver.h>
 #include <midi/VoiceCallback.h>
 
+#include <async/Mutex.h>
+
+using namespace ravensnight::async;
 namespace ravensnight::midi {
 
     class VoiceReceiver : public MidiReceiver {
 
         private:
+
+            Mutex _mutex;
             VoiceCallback* _cb;
 
             // check received CINType for acceptance

@@ -3,9 +3,12 @@
 
 #include <midi/MidiReceiver.h>
 #include <midi/SysexHandler.h>
-#include <mutex>
+
+#include <async/Mutex.h>
 
 using namespace ravensnight::utils;
+using namespace ravensnight::async;
+
 namespace ravensnight::midi {
 
     enum class SysexState : uint8_t {
@@ -17,17 +20,16 @@ namespace ravensnight::midi {
 
         private:
 
-            SysexState _state = SysexState::WAITING;
-            
-            std::mutex _mutex;
+            SysexState _state = SysexState::WAITING;            
+            Mutex _mutex;
 
             Buffer _buffer;
             size_t _msgLen;
 
             SysexHandler* _handler;
 
-
-            bool append(const MidiEvent& evt);
+            bool unsafeAppend(const MidiEvent& evt);
+            void unsafeReset();
 
         public:
 

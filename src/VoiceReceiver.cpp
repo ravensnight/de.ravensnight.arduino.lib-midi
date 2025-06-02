@@ -1,10 +1,11 @@
 #include <midi/VoiceReceiver.h>
 #include <Logger.h>
+#include <async/LockGuard.h>
 
 using namespace ravensnight::logging;
 using namespace ravensnight::midi;
 
-VoiceReceiver::VoiceReceiver(VoiceCallback* cb) {
+VoiceReceiver::VoiceReceiver(VoiceCallback* cb) : _mutex("VoiceReceiver") {
     _cb = cb;
 }
 
@@ -35,6 +36,7 @@ bool VoiceReceiver::accepted(CINType type) {
 }
 
 void VoiceReceiver::handle(const MidiEvent& evt) {
+    synchronized(_mutex);
 
     if ((_cb == 0) || (!accepted(evt.type)) || (evt.msgLength < 3)) {
         Logger::warn("Cannot handle message: type=%d, len=%d", evt.type, evt.msgLength);

@@ -123,7 +123,7 @@ int RolandSysexHandler::handleCmdRead(RolandSysexAddr& addr, BufferInputStream& 
         os << recordInfo.addr;
 
         // convert record data to midi buffer
-        conv->encode(os, recordBuffer);
+        conv->encode(os, recordBuffer.bytes(), recordBuffer.length());
 
         // create checksum
         checksum2.reset();
@@ -185,7 +185,7 @@ int RolandSysexHandler::handleCmdWrite(RolandSysexAddr& addr, BufferInputStream&
     BufferOutputStream os(decodedBuffer);
 
     Logger::debug("Roland:Sysex:Write - decode payload from %d to %d", midiBufferSize, recordInfo.size);
-    conv->decode(os, midiPayload);
+    conv->decode(os, midiPayload.bytes(), midiBufferSize);
 
     Logger::debug("Roland:Sysex:Write - write decoded buffer to model.");
     _cb->writeToModel(addr, decodedBuffer);
