@@ -6,11 +6,8 @@
 #include <esp32-hal-tinyusb.h>
 #include <USB.h>
 
-#include <async/Mutex.h>
 #include <midi/MidiCommon.h>
 #include <midi/MidiReceiver.h>
-
-using namespace ravensnight::async;
 
 namespace ravensnight::midi {
 

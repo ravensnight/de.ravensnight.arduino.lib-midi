@@ -4,6 +4,7 @@
 
 using namespace ravensnight::logging;
 using namespace ravensnight::midi;
+using namespace ravensnight::async;
 
 VoiceReceiver::VoiceReceiver(VoiceCallback* cb) : _mutex("VoiceReceiver") {
     _cb = cb;
@@ -36,12 +37,13 @@ bool VoiceReceiver::accepted(CINType type) {
 }
 
 void VoiceReceiver::handle(const MidiEvent& evt) {
-    synchronized(_mutex);
 
     if ((_cb == 0) || (!accepted(evt.type)) || (evt.msgLength < 3)) {
         Logger::warn("Cannot handle message: type=%d, len=%d", evt.type, evt.msgLength);
         return;
     }
+
+    synchronized(_mutex);
 
     uint8_t status = evt.msg[0];
     uint8_t value1 = evt.msg[1];
