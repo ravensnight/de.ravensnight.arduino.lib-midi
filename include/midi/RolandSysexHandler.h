@@ -9,6 +9,7 @@
 
 namespace ravensnight::midi {
 
+    #define ROLAND_MANUFACTURER_CODE 0x41
     class RolandSysexHandler : public SysexHandler {
 
         public:
@@ -17,6 +18,7 @@ namespace ravensnight::midi {
             ~RolandSysexHandler();
 
             // implements function from SysexHandler
+            bool canHandle(uint8_t manufacturer);
             void onSysEx(const uint8_t* buffer, size_t len);
 
         private:
@@ -30,7 +32,6 @@ namespace ravensnight::midi {
              * Parse a message from Midi In-Stream and potentially respond to writer.
              * Returns the number of bytes read or sent as payload or -1, if address was invalid or message could not be parsed correctly.
              */
-            int handleSysEx(const uint8_t* buffer, size_t len);
             int handleCmdRead(RolandSysexAddr& addr, BufferInputStream& inputStream);
             int handleCmdWrite(RolandSysexAddr& addr, BufferInputStream& inputStream);
 

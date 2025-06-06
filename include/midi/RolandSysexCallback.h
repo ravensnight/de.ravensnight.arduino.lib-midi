@@ -2,6 +2,7 @@
 #define __ROLAND_SYSEX_CALLBACK__
 
 #include <Arduino.h>
+#include <Stream.h>
 #include <midi/RolandSysexTypes.h>
 
 namespace ravensnight::midi {
@@ -37,12 +38,12 @@ namespace ravensnight::midi {
             /**
              * Apply the data which has been received from sysex
              */
-            virtual void writeToModel(const RolandSysexAddr& addr, Buffer& buffer) = 0;
+            virtual void writeToModel(const RolandSysexAddr& addr, Stream& buffer) = 0;
 
             /**
              * Read some data from addr and provide it to buffer.
              */
-            virtual void readFromModel(const RolandSysexAddr& addr, Buffer& buffer) = 0;
+            virtual void readFromModel(const RolandSysexAddr& addr, Stream& buffer) = 0;
 
     };
 

@@ -197,16 +197,15 @@ void MidiDevice::readInput() {
         event.type = (CINType)(0x0F & header);
 
         //Logger::debug("Received midi packet for pipe %d, cin: %02x", event.cable, event.type);
-
-
         if (event.cable < cableCount) {            
+            MidiReceiver* r = cables[event.cable].receiver;
+
             event.msgLength = getPacketLen(event.type);
             memcpy(event.msg, _packet + 1, event.msgLength);
 
-            Logger::debug("Received midi packet cable: %d, type: %d size: %d", event.cable, event.type, event.msgLength);
-            Logger::dump("Midi packet msg: ", event.msg, event.msgLength, 0);
-
-            cables[event.cable].receiver->handle(event);
+            // Logger::debug("Received midi packet cable: %d, type: %d size: %d", event.cable, event.type, event.msgLength);
+            // Logger::dump("Midi packet msg: ", event.msg, event.msgLength, 0);
+            r->handle(event);
         }
     }
 }

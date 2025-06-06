@@ -40,13 +40,6 @@ namespace ravensnight::midi {
         return chksum;
     }
 
-    RolandSysexChecksum& operator <<(RolandSysexChecksum& chksum, Buffer& buffer) {
-        for (size_t i = 0; i < buffer.length(); i++) {
-            chksum.add(buffer[i]);
-        }
-        return chksum;
-    }
-
     Stream& operator<<(Stream& os, const RolandSysexChecksum& chksum) {
         os << chksum.value();
         return os;

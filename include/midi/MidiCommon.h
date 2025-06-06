@@ -13,7 +13,7 @@ namespace ravensnight::midi {
 
     enum class CINType : uint8_t {
 
-        Misc = 0x00,
+        Reserved = 0x00,
         CableEvent = 0x01,
         Common2Byte = 0x02,
         Common3Byte = 0x03,

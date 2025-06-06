@@ -9,14 +9,14 @@
 using namespace ravensnight::midi;
 using namespace ravensnight::logging;
 
-MidiTransmitter::MidiTransmitter(uint8_t cable, size_t bufferSize) {  
+MidiTransmitter::MidiTransmitter(uint8_t cable, size_t bufferSize) : _outBuffer(bufferSize)
+{  
     _cable = cable;
-    _outBuffer = Buffer(bufferSize);
 }
 
-MidiTransmitter::MidiTransmitter(MidiTransmitter& source) {  
-    _cable = source._cable;
-    _outBuffer = Buffer(source._outBuffer.bytes(), source._outBuffer.length());
+MidiTransmitter::MidiTransmitter(MidiTransmitter& source) : _outBuffer(source._outBuffer.bytes(), 0, source._outBuffer.length())
+{  
+    _cable = source._cable;    
 }
 
 MidiTransmitter::~MidiTransmitter() {    
@@ -140,8 +140,8 @@ size_t MidiTransmitter::sendSysEx(uint8_t channel, Buffer& message) {
     std::lock_guard<std::mutex> lock(bufferLock);
 
     uint16_t size = message.length() + 3; // + begin + channel + end
-    if (size > _outBuffer.length()) {
-        Logger::error("MidiTransmitter::sendSysEx - outbuffer size %d exceeded by payload size %d(%d). Cannot send sysex!", _outBuffer.length(), size, message.length());
+    if (size > _outBuffer.avail()) {
+        Logger::error("MidiTransmitter::sendSysEx - outbuffer size %d exceeded by payload size %d(%d). Cannot send sysex!", _outBuffer.avail(), size, message.length());
         return -1;
     }
 

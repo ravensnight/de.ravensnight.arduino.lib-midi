@@ -32,7 +32,7 @@ bool VoiceReceiver::accepted(CINType type) {
         default:
             // CINType::Misc
             // CINType::CableEvent
-            return 0;            
+            return false;            
     }    
 }
 

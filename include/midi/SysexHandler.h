@@ -10,6 +10,7 @@ namespace ravensnight::midi {
     class SysexHandler {
 
         public:
+            virtual bool canHandle(uint8_t manufacturer) = 0;          
             virtual void onSysEx(const uint8_t* message, size_t len) = 0;
 
     };

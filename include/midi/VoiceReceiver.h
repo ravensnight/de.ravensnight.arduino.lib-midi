@@ -16,7 +16,6 @@ namespace ravensnight::midi {
             Mutex _mutex;
             VoiceCallback* _cb;
 
-            // check received CINType for acceptance
             bool accepted(CINType type);
 
         public:

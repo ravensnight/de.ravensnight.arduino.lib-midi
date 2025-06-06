@@ -12,24 +12,26 @@ using namespace ravensnight::async;
 namespace ravensnight::midi {
 
     enum class SysexState : uint8_t {
-        WAITING = 0,
-        READING = 1
+        open = 0,
+        reading = 1,
+        ignore = 2        
     };
 
     class SysexReceiver : public MidiReceiver {
 
         private:
 
-            SysexState _state = SysexState::WAITING;            
-            Mutex _mutex;
+            Mutex           _mutex;
+            Buffer          _buffers[2];
+            uint8_t         _activeBuffer;
+            SysexHandler*   _handler;
+            SysexState      _state;
 
-            Buffer _buffer;
-            size_t _msgLen;
+            bool accepted(CINType type);
 
-            SysexHandler* _handler;
-
-            bool unsafeAppend(const MidiEvent& evt);
+            bool unsafeAppend(const uint8_t* buffer, uint8_t len);
             void unsafeReset();
+            void unsafeTrigger();
 
         public:
 
@@ -37,7 +39,6 @@ namespace ravensnight::midi {
             ~SysexReceiver();
 
             void handle(const MidiEvent& event);
-            void reset();
     };
 
 }

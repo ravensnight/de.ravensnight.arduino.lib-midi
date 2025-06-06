@@ -1,5 +1,4 @@
 #include <midi/RolandSysexAddr.h>
-#include <StreamOperators.h>
 #include <Logger.h>
 
 using namespace ravensnight::logging;
