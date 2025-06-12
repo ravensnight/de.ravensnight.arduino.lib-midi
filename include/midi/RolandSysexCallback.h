@@ -38,12 +38,12 @@ namespace ravensnight::midi {
             /**
              * Apply the data which has been received from sysex
              */
-            virtual void writeToModel(const RolandSysexAddr& addr, Stream& buffer) = 0;
+            virtual Result writeToModel(const RolandSysexAddr& addr, Stream& istream) = 0;
 
             /**
              * Read some data from addr and provide it to buffer.
              */
-            virtual void readFromModel(const RolandSysexAddr& addr, Stream& buffer) = 0;
+            virtual Result readFromModel(const RolandSysexAddr& addr, Stream& istream) = 0;
 
     };
 

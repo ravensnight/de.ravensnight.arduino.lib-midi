@@ -151,8 +151,9 @@ size_t MidiTransmitter::sendSysEx(uint8_t channel, Buffer& message) {
     os << channel;
     os << message;
     os << (uint8_t)MessageType::SysExEnd;
-    
-    Logger::dump("Send SysEx bytes: ", _outBuffer.bytes(), size, 0);
+
+    Logger::debug("Write sysex bytes. Len: %d", size);
+    // Logger::dump("Send SysEx bytes: ", _outBuffer.bytes(), size, 0);
     write(_outBuffer.bytes(), size);
 
     return size;

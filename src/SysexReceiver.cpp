@@ -8,37 +8,11 @@ using namespace ravensnight::midi;
 using namespace ravensnight::logging;
 using namespace ravensnight::async;
 
-SysexReceiver::SysexReceiver(size_t bufferSize, SysexHandler* handler) : _mutex("SysexReceiver") {
-    Logger::info("SysexReceiver buffer size is %d", bufferSize);
-    _buffers[0] = Buffer(bufferSize);
-    _buffers[1] = Buffer(bufferSize);
-
-    _activeBuffer = 0;
+SysexReceiver::SysexReceiver(SysexHandler* handler) : _mutex("SysexReceiver") {
     _handler = handler;
-    _state = SysexState::open;
 }
 
 SysexReceiver::~SysexReceiver() {
-    _buffers[0].destroy();
-    _buffers[1].destroy();
-    _activeBuffer = 0;
-}
-
-void SysexReceiver::unsafeReset() {
-    _buffers[_activeBuffer].reset();
-    _state = SysexState::open;
-}
-
-bool SysexReceiver::unsafeAppend(const uint8_t* buffer, uint8_t len) {
-    
-    if ((len > 0) && (_buffers[_activeBuffer].avail() < len)) {
-        Logger::warn("SysexReceiver::handle - Buffer overrun. Reset.", len);
-        return false;
-    }
-
-    _buffers[_activeBuffer].append(buffer, len);
-    // Logger::debug("SysexReceiver::apppend - new msg length = %d", _buffers[_activeBuffer].length());
-    return true;
 }
 
 bool SysexReceiver::accepted(CINType type) {
@@ -50,39 +24,34 @@ bool SysexReceiver::accepted(CINType type) {
             return true;
 
         default:
+            // Logger::debug("SysexReceiver::accepted - reject evt type: %d", type);
             return false;
     }
 }
 
-void SysexReceiver::unsafeTrigger() {
-    uint8_t current = _activeBuffer;
-    _activeBuffer = (current == 0) ? 1 : 0;
-
-    Logger::debug("Midi message received in buffer %d. Length = %d", current, _buffers[current].length());
-    if (_buffers[current].length() < 80) {
-        Logger::dump("Message is:", _buffers[current].bytes(), _buffers[current].length(), 0);
+void SysexReceiver::unsafeAppend(const uint8_t* buffer, uint8_t len) {
+    if (len == 0) return;
+    for (uint8_t i = 0; i < len; i++) {
+        _handler->append(buffer[i]);
     }
-    _handler->onSysEx(_buffers[current].bytes(), _buffers[current].length());
 }
 
 void SysexReceiver::handle(const MidiEvent& evt) {
     if (!accepted(evt.type) || _handler == 0) return;
 
     synchronized(_mutex);
-    bool trigger = false;
+    // Logger::debug("SysexReceiver::handle - msg:[%02x, %02x, %02x] len:%d", evt.msg[0], evt.msg[1], evt.msg[2], evt.msgLength);
 
     switch (evt.type) {
         case CINType::SysexStart:  {
+            // Logger::debug("SysexReceiver::handle - start/continue. size: %d", evt.msgLength);
             if (evt.msg[0] == 0xF0) {   // first byte
-                unsafeReset();
-                if (_handler->canHandle(evt.msg[1])) {  // check manufacturer
-                    unsafeAppend(evt.msg + 2, 1);       // append last byte of 3 to buffer
-                    _state = SysexState::reading;
-                } else {
-                    _state = SysexState::ignore;
+                _handler->init();
+                if (_handler->ready()) {
+                    unsafeAppend(evt.msg + 1, evt.msgLength - 1);
                 }
             } else {
-                if (_state == SysexState::reading) {
+                if (_handler->ready()) {
                     unsafeAppend(evt.msg, evt.msgLength);
                 }
             }
@@ -92,27 +61,20 @@ void SysexReceiver::handle(const MidiEvent& evt) {
         case CINType::SysexEnd1: 
         case CINType::SysexEnd2:
         case CINType::SysexEnd3:
-        {
-            uint8_t last = evt.msgLength - 1;
-            if (_state == SysexState::reading) {
+            // RecordInfoLogger::debug("SysexReceiver::handle - end. size: %d", evt.msgLength);
+            if (_handler->ready()) {
+                uint8_t last = evt.msgLength - 1;
                 if (evt.msg[last] == 0xF7) {
                     if (last > 0) {
                         unsafeAppend(evt.msg, last);
                     }
 
-                    _state = SysexState::open;
-                    trigger = true;
+                    _handler->commit();
                 }
             }
             break;
-        }
 
         default:
-            unsafeReset();
             break;
-    }
-
-    if (trigger) {
-        unsafeTrigger();
     }
 }

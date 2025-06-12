@@ -1,6 +1,7 @@
 #include <esp32-hal-tinyusb.h>
 #include <Logger.h>
 #include <midi/MidiDevice.h>
+#include <async/LockGuard.h>
 
 using namespace ravensnight::midi;
 using namespace ravensnight::logging;
@@ -188,25 +189,43 @@ uint8_t MidiDevice::getPacketLen(CINType tp) {
 }
 
 void MidiDevice::readInput() {
+    synchronized(_mutex);
 
-    MidiEvent event;
+    MidiEvent event = {
+        .type = CINType::Reserved,
+        .cable = 0,
+        .msg = { 0 },
+        .msgLength = 0
+    };
+
+    size_t count = 0;
     while (tud_midi_n_packet_read(0, _packet)) {
 
         uint8_t header = _packet[0];
-        event.cable = (header >> 4);
         event.type = (CINType)(0x0F & header);
+        if ((event.type == CINType::Reserved) || (event.type == CINType::CableEvent)) {
+            // some invalid event. skip
+            continue;
+        }
 
+        event.cable = (header >> 4);
         //Logger::debug("Received midi packet for pipe %d, cin: %02x", event.cable, event.type);
         if (event.cable < cableCount) {            
             MidiReceiver* r = cables[event.cable].receiver;
 
             event.msgLength = getPacketLen(event.type);
+            memset(event.msg, 0, 3);
             memcpy(event.msg, _packet + 1, event.msgLength);
 
             // Logger::debug("Received midi packet cable: %d, type: %d size: %d", event.cable, event.type, event.msgLength);
             // Logger::dump("Midi packet msg: ", event.msg, event.msgLength, 0);
             r->handle(event);
+            count += event.msgLength;
         }
+    }
+
+    if (count > 0) {
+        Logger::debug("MidiDevice::readInput - Received %d valid bytes.", count);
     }
 }
 
@@ -217,4 +236,5 @@ bool MidiDevice::_available = false;
 uint8_t MidiDevice::cableCount = 0;
 uint8_t MidiDevice::nameIndex = 0;
 CableDef MidiDevice::cables[MAX_CABLE_COUNT];
+Mutex MidiDevice::_mutex("MidiDevice");
 uint8_t MidiDevice::_packet[4] = { 0 };

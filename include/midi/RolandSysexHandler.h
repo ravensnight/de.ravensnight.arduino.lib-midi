@@ -5,35 +5,71 @@
 #include <midi/SysexHandler.h>
 #include <midi/RolandSysexCallback.h>
 #include <Converter.h>
-#include <mutex>
+
+#include <BufferInputStream.h>
+#include <async/Mutex.h>
+
+using namespace ravensnight::async;
+using namespace ravensnight::utils;
 
 namespace ravensnight::midi {
 
-    #define ROLAND_MANUFACTURER_CODE 0x41
+    enum class Stage : uint8_t {
+        undefined = 0,
+        manufacturer = 1,
+        device = 2,
+        model = 3,
+        command = 4,
+        address = 5,
+        payload = 6,
+        checksum = 7,
+        complete = 8
+    };
     class RolandSysexHandler : public SysexHandler {
 
         public:
 
-            RolandSysexHandler(RolandSysexCallback* cb, MidiTransmitter* out);
+            RolandSysexHandler(size_t bufferSize, RolandSysexCallback* cb, MidiTransmitter* out);
             ~RolandSysexHandler();
+
+            void init();
+            void append(uint8_t);
+            void commit();
+            bool ready();
+
+        private:
+
+            RolandSysexAddr     _reqAddress;
+            RolandSysexChecksum _reqChecksum;
+            AddressInfo         _reqAddressInfo;
+            Buffer              _reqBuffer;
+            Command             _reqCommand;
+            size_t              _reqPayloadSize;
+
+            Stage               _stage;
+            Mutex               _mutex;
+
+            MidiTransmitter* _out;
+            RolandSysexCallback* _cb;
+            Converter* _conv[2];
+
+            void reset();
 
             // implements function from SysexHandler
             bool canHandle(uint8_t manufacturer);
             void onSysEx(const uint8_t* buffer, size_t len);
 
-        private:
-
-            std::mutex _mutex;
-            MidiTransmitter* _out;
-            RolandSysexCallback* _cb;
-            Converter* _conv[2];
-
             /**
              * Parse a message from Midi In-Stream and potentially respond to writer.
              * Returns the number of bytes read or sent as payload or -1, if address was invalid or message could not be parsed correctly.
              */
-            int handleCmdRead(RolandSysexAddr& addr, BufferInputStream& inputStream);
-            int handleCmdWrite(RolandSysexAddr& addr, BufferInputStream& inputStream);
+            bool handleCmdRead(RolandSysexAddr& addr, BufferInputStream& inputStream);
+            bool handleCmdWrite(RolandSysexAddr& addr, BufferInputStream& inputStream);
+
+            /**
+             * Send some reply message out to client.
+             */
+            void sendReply(RolandSysexAddr& addr, const uint8_t* decodedPayload, size_t len);
 
     };
 }
