@@ -136,9 +136,7 @@ void MidiTransmitter::sendMidiContinue() {
     send(MessageType::MidiContinue, 0, 0, 0);
 }
 
-size_t MidiTransmitter::sendSysEx(uint8_t channel, Buffer& message) {
-    std::lock_guard<std::mutex> lock(bufferLock);
-
+size_t MidiTransmitter::sendSysEx(uint8_t channel, Buffer& message) {    
     uint16_t size = message.length() + 3; // + begin + channel + end
     if (size > _outBuffer.avail()) {
         Logger::error("MidiTransmitter::sendSysEx - outbuffer size %d exceeded by payload size %d(%d). Cannot send sysex!", _outBuffer.avail(), size, message.length());

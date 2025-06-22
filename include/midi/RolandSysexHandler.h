@@ -45,9 +45,7 @@ namespace ravensnight::midi {
             Buffer              _reqBuffer;
             Command             _reqCommand;
             size_t              _reqPayloadSize;
-
             Stage               _stage;
-            Mutex               _mutex;
 
             MidiTransmitter* _out;
             RolandSysexCallback* _cb;
@@ -55,16 +53,12 @@ namespace ravensnight::midi {
 
             void reset();
 
-            // implements function from SysexHandler
-            bool canHandle(uint8_t manufacturer);
-            void onSysEx(const uint8_t* buffer, size_t len);
-
             /**
              * Parse a message from Midi In-Stream and potentially respond to writer.
              * Returns the number of bytes read or sent as payload or -1, if address was invalid or message could not be parsed correctly.
              */
-            bool handleCmdRead(RolandSysexAddr& addr, BufferInputStream& inputStream);
-            bool handleCmdWrite(RolandSysexAddr& addr, BufferInputStream& inputStream);
+            void handleCmdRead(RolandSysexAddr& addr, BufferInputStream& inputStream);
+            void handleCmdWrite(RolandSysexAddr& addr, BufferInputStream& inputStream);
 
             /**
              * Send some reply message out to client.

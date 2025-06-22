@@ -189,7 +189,6 @@ uint8_t MidiDevice::getPacketLen(CINType tp) {
 }
 
 void MidiDevice::readInput() {
-    synchronized(_mutex);
 
     MidiEvent event = {
         .type = CINType::Reserved,
@@ -213,6 +212,9 @@ void MidiDevice::readInput() {
         if (event.cable < cableCount) {            
             MidiReceiver* r = cables[event.cable].receiver;
 
+            // wait for receiver being ready.
+            while (!r->ready());
+
             event.msgLength = getPacketLen(event.type);
             memset(event.msg, 0, 3);
             memcpy(event.msg, _packet + 1, event.msgLength);
@@ -224,9 +226,11 @@ void MidiDevice::readInput() {
         }
     }
 
+    /*
     if (count > 0) {
         Logger::debug("MidiDevice::readInput - Received %d valid bytes.", count);
     }
+    */
 }
 
 MidiDevice MidiDevice::instance = MidiDevice();
@@ -236,5 +240,4 @@ bool MidiDevice::_available = false;
 uint8_t MidiDevice::cableCount = 0;
 uint8_t MidiDevice::nameIndex = 0;
 CableDef MidiDevice::cables[MAX_CABLE_COUNT];
-Mutex MidiDevice::_mutex("MidiDevice");
 uint8_t MidiDevice::_packet[4] = { 0 };

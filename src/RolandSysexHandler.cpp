@@ -15,8 +15,7 @@ using namespace ravensnight::midi;
 using namespace ravensnight::logging;
 
 RolandSysexHandler::RolandSysexHandler(size_t bufferSize, RolandSysexCallback* cb, MidiTransmitter* writer) :
-    _reqBuffer(bufferSize),
-    _mutex("RolandSysexHandler")
+    _reqBuffer(bufferSize)
 {
     _cb = cb;
     _out = writer;
@@ -149,7 +148,6 @@ void RolandSysexHandler::append(uint8_t byte) {
 }
 
 void RolandSysexHandler::commit() {
-    synchronized(_mutex);
 
     Result res = Result::error;
     if (_stage == Stage::complete) {
@@ -207,7 +205,7 @@ void RolandSysexHandler::sendReply(RolandSysexAddr& targetAddr, const uint8_t* d
 
 }
 
-bool RolandSysexHandler::handleCmdRead(RolandSysexAddr& addr, BufferInputStream& inputStream) {
+void RolandSysexHandler::handleCmdRead(RolandSysexAddr& addr, BufferInputStream& inputStream) {
     size_t midiByteLen = 0, encodedSize = 0;
 
     Logger::debug("RolandSysexHandler::handleCmdRead.");
@@ -216,7 +214,6 @@ bool RolandSysexHandler::handleCmdRead(RolandSysexAddr& addr, BufferInputStream&
     uint8_t payload[3];     
     if (inputStream.readBytes(payload, 3) < 3) {
         Logger::warn("RolandSysexHandler::handleCmdRead - Did not receive size payload of 3 bytes. Stop here.");
-        return false;
     }        
 
     // get record size
@@ -254,14 +251,11 @@ bool RolandSysexHandler::handleCmdRead(RolandSysexAddr& addr, BufferInputStream&
             sendReply(recordInfo.addr, recordStream.buffer().bytes(), recordStream.buffer().length());
         } else {
             Logger::debug("Failed to acquire model data: %06x of size=%d", recordInfo.addr.get(), recordInfo.size);
-            return false;
         }
     }
-
-    return true;
 }
 
-bool RolandSysexHandler::handleCmdWrite(RolandSysexAddr& addr, BufferInputStream& inputStream) {
+void RolandSysexHandler::handleCmdWrite(RolandSysexAddr& addr, BufferInputStream& inputStream) {
     Logger::debug("RolandSysexHandler::handleCmdWrite.");
 
     Converter* conv = _conv[_reqAddressInfo.recordEncoding];
@@ -291,5 +285,4 @@ bool RolandSysexHandler::handleCmdWrite(RolandSysexAddr& addr, BufferInputStream
     }
 
     Logger::debug("Roland:Sysex:Write - cleanup.");
-    return len;
 }

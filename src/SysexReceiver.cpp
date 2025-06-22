@@ -6,10 +6,9 @@
 
 using namespace ravensnight::midi;
 using namespace ravensnight::logging;
-using namespace ravensnight::async;
 
-SysexReceiver::SysexReceiver(SysexHandler* handler) : _mutex("SysexReceiver") {
-    _handler = handler;
+SysexReceiver::SysexReceiver(SysexHandler* handler) : _lock("SysexReceiver") {
+    _handler = handler;    
 }
 
 SysexReceiver::~SysexReceiver() {
@@ -36,10 +35,14 @@ void SysexReceiver::unsafeAppend(const uint8_t* buffer, uint8_t len) {
     }
 }
 
-void SysexReceiver::handle(const MidiEvent& evt) {
-    if (!accepted(evt.type) || _handler == 0) return;
+bool SysexReceiver::ready() {
+    return !_lock.isLocked();
+}
 
-    synchronized(_mutex);
+void SysexReceiver::handle(const MidiEvent& evt) {
+    if (!accepted(evt.type) || _handler == 0 || _lock.isLocked()) return;
+    acquirelock(_lock);
+
     // Logger::debug("SysexReceiver::handle - msg:[%02x, %02x, %02x] len:%d", evt.msg[0], evt.msg[1], evt.msg[2], evt.msgLength);
 
     switch (evt.type) {

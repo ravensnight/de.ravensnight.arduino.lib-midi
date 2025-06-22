@@ -5,8 +5,6 @@ using namespace ravensnight::logging;
 namespace ravensnight::midi {
 
     Stream& operator << (Stream& os, const RolandSysexAddr& addr) {
-        uint32_t val = addr.get();
-
         os << addr.get7bitHSB();
         os << addr.get7bitMSB();
         os << addr.get7bitLSB();

@@ -5,7 +5,6 @@
 #include <Stream.h>
 #include <Buffer.h>
 #include <midi/MidiDevice.h>
-#include <mutex>
 
 using namespace ravensnight::utils;
 namespace ravensnight::midi {
@@ -13,8 +12,6 @@ namespace ravensnight::midi {
     class MidiTransmitter {
 
         private:
-            std::mutex bufferLock;
-
             uint8_t _cable;
             Buffer _outBuffer;
 

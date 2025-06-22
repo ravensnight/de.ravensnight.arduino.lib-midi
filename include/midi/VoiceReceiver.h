@@ -4,7 +4,7 @@
 #include <midi/MidiReceiver.h>
 #include <midi/VoiceCallback.h>
 
-#include <async/Mutex.h>
+#include <async/WeakLock.h>
 
 using namespace ravensnight::async;
 namespace ravensnight::midi {
@@ -13,7 +13,7 @@ namespace ravensnight::midi {
 
         private:
 
-            Mutex _mutex;
+            WeakLock _lock;
             VoiceCallback* _cb;
 
             bool accepted(CINType type);
@@ -23,6 +23,7 @@ namespace ravensnight::midi {
             VoiceReceiver(VoiceCallback* cb);
             ~VoiceReceiver();
 
+            bool ready();
             void handle(const MidiEvent& event);
     };
 

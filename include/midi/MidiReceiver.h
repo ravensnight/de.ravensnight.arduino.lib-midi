@@ -10,6 +10,7 @@ namespace ravensnight::midi {
 
         public:
 
+            virtual bool ready() = 0;
             virtual void handle(const MidiEvent& event) = 0;
             friend MidiReceiver& operator<<(MidiReceiver& q, const MidiEvent& event);
 

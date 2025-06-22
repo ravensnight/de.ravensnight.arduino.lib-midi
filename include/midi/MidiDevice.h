@@ -6,11 +6,9 @@
 #include <esp32-hal-tinyusb.h>
 #include <USB.h>
 
-#include <async/Mutex.h>
 #include <midi/MidiCommon.h>
 #include <midi/MidiReceiver.h>
 
-using namespace ravensnight::async;
 namespace ravensnight::midi {
 
 #define MAX_CABLE_NAMELEN 25
@@ -18,9 +16,6 @@ namespace ravensnight::midi {
     #define MAX_CABLE_COUNT 3
 #endif
 
-#ifndef MIDI_PIPE_LEN
-    #define MIDI_PIPE_LEN 64
-#endif
 typedef struct {
     int vendorId;
     int productId;
@@ -42,7 +37,6 @@ class MidiDevice {
 
     private:
 
-        static Mutex _mutex;
         static uint8_t cableCount;
         static CableDef cables[MAX_CABLE_COUNT];
 

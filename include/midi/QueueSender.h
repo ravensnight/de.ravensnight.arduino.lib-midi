@@ -3,6 +3,7 @@
 
 #include <midi/MidiCommon.h>
 #include <midi/MidiDevice.h>
+#include <async/WeakLock.h>
 #include <async/Queue.hpp>
 
 using namespace ravensnight::midi;
@@ -13,6 +14,7 @@ namespace ravensnight::midi {
     class QueueSender : public MidiReceiver {
 
         private:
+            WeakLock _lock;
             Queue<MidiEvent>* _queue;
             int _cable;
 
@@ -21,6 +23,7 @@ namespace ravensnight::midi {
             QueueSender(Queue<MidiEvent>& queue);
             QueueSender(uint8_t cable, Queue<MidiEvent>& queue);
 
+            bool ready();
             void handle(const MidiEvent& event);
     };
 
