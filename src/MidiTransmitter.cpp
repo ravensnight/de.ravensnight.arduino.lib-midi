@@ -24,25 +24,13 @@ MidiTransmitter::~MidiTransmitter() {
 }
 
 size_t MidiTransmitter::write(uint8_t* buf, size_t size) {
-    int len = 0;
-
-    if (!MidiDevice::instance.available()) {
-        Logger::debug("Do not write to midi out, since USB is not available.");
-        return 0;
-    }
-    
-    do {        
-        len += tud_midi_n_stream_write(0, this->_cable, buf + len, size - len);
-        Logger::debug("Stream::write - write buffer of size: %d, sent: %d", size, len);
-    } while (len < size);
-
-    return len;
+    return MidiDevice::instance.publish(_cable, buf, size);
 }
 
 void MidiTransmitter::send(MessageType type, uint8_t channel, uint8_t val1, uint8_t val2) {
 
     uint8_t t = (uint8_t)type;
-    uint8_t msg[3];
+    uint8_t msg[3] = { 0 };
 
     msg[0] = (uint8_t)((t & 0xF0) == 0xF0 ? t : (t | (channel & 0x0F)));
     msg[1] = __lsb(val1);

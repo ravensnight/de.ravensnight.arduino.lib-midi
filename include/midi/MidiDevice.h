@@ -16,6 +16,8 @@ namespace ravensnight::midi {
     #define MAX_CABLE_COUNT 3
 #endif
 
+#define MAX_TRIES_MIDIWRITE 5
+
 typedef struct {
     int vendorId;
     int productId;
@@ -70,8 +72,10 @@ class MidiDevice {
         bool available();
 
         // read midi input into given queue. 
-        void readInput();
+        void receive();
 
+        // write midi to output
+        size_t publish(uint8_t cable, uint8_t* buffer, size_t size);
 };
 
 }

@@ -188,7 +188,7 @@ uint8_t MidiDevice::getPacketLen(CINType tp) {
     }
 }
 
-void MidiDevice::readInput() {
+void MidiDevice::receive() {
 
     MidiEvent event = {
         .type = CINType::Reserved,
@@ -225,12 +225,36 @@ void MidiDevice::readInput() {
             count += event.msgLength;
         }
     }
+}
 
-    /*
-    if (count > 0) {
-        Logger::debug("MidiDevice::readInput - Received %d valid bytes.", count);
+size_t MidiDevice::publish(uint8_t cable, uint8_t* buffer, size_t size) {
+    if (size == 0) return 0;
+
+    if (!available()) {
+        Logger::debug("MidiDevice::publish - Do not write to midi out, since USB is not available.");
+        return 0;
     }
-    */
+
+    int len = 0;
+    uint8_t tries = 0;
+    size_t sent = 0;
+    do {        
+        sent = tud_midi_n_stream_write(0, cable, buffer + len, size - len);
+
+        if (sent == 0) {
+            tries++;
+            if (tries > MAX_TRIES_MIDIWRITE) {
+                Logger::error("MidiDevice::publish - Only %d bytes of %d could be sent.");
+                return len;
+            }
+        } else {
+            len += sent;
+        }
+
+        Logger::debug("MidiDevice::publish - Sent %d bytes of %d", len, size);
+    } while (len < size);
+
+    return len;
 }
 
 MidiDevice MidiDevice::instance = MidiDevice();
