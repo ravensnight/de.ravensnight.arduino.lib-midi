@@ -102,16 +102,25 @@ void RolandSysexHandler::append(uint8_t byte) {
                 BufferInputStream is(_reqBuffer);
                 is >> _reqAddress;
                 if (_cb->getAddressInfo(_reqAddress, _reqAddressInfo)) {
-                    _stage = Stage::payload;
 
                     if (_reqCommand == Command::read) {
                         _reqPayloadSize = 3;
-                    } else {
+                        _stage = Stage::payload;
+                    } else {                         
+                        // command write
                         RecordInfo info;
                         _cb->getRecordInfo(_reqAddress, 0, info);
 
-                        Converter* conv = _conv[ _reqAddressInfo.recordEncoding ];
-                        _reqPayloadSize = conv->getEncodedSize(info.size);
+                        if (info.size == 0) {
+                            // no payload directly jump to checksum
+                            _reqPayloadSize = 0;
+                            _stage = Stage::checksum;
+                        } else {
+                            // calculate payload size
+                            Converter* conv = _conv[ _reqAddressInfo.recordEncoding ];
+                            _reqPayloadSize = conv->getEncodedSize(info.size);
+                            _stage = Stage::payload;
+                        }
                     }
 
                     _reqBuffer.reset();
