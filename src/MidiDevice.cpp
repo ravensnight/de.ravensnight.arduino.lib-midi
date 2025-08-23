@@ -119,7 +119,7 @@ int8_t MidiDevice::attach(const char* name, MidiReceiver* receiver) {
     return -1;
 }
 
-void MidiDevice::setup(const USBConfig& config) {
+bool MidiDevice::setup(const USBConfig& config) {
 
     // Change USB Device Descriptor Parameter
     USB.VID(config.vendorId); // vendor id
@@ -149,9 +149,8 @@ void MidiDevice::setup(const USBConfig& config) {
     tinyusb_enable_interface(USB_INTERFACE_MIDI, calculateDescriptorLength(), descriptorCallback);
     USB.onEvent(MidiDevice::usbCallback);        
 
-    USB.begin();
-
-    // available flag is being set in USB callback function.
+    bool result = USB.begin();
+    return result;
 }
 
 bool MidiDevice::available() {

@@ -66,7 +66,7 @@ class MidiDevice {
         int8_t attach(const char* cableName, MidiReceiver* q);
 
         // install this interface to USB
-        void setup(const USBConfig& config);
+        bool setup(const USBConfig& config);
 
         // check, if midi device is available.
         bool available();
