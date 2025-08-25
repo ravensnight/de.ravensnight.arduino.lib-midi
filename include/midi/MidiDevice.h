@@ -6,9 +6,11 @@
 #include <esp32-hal-tinyusb.h>
 #include <USB.h>
 
+#include <async/LockGuard.h>
 #include <midi/MidiCommon.h>
 #include <midi/MidiReceiver.h>
 
+using namespace ravensnight::async;
 namespace ravensnight::midi {
 
 #define MAX_CABLE_NAMELEN 25
@@ -38,13 +40,14 @@ typedef struct {
 class MidiDevice {
 
     private:
-
+        
         static uint8_t cableCount;
         static CableDef cables[MAX_CABLE_COUNT];
 
         static bool _available;
         static uint8_t nameIndex;
         static uint8_t _packet[4];
+        static Mutex  _mutex;
 
         static void usbCallback(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data);
         static uint16_t descriptorCallback(uint8_t* dst, uint8_t * itf);

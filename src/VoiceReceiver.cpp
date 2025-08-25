@@ -1,13 +1,15 @@
 #include <midi/VoiceReceiver.h>
 #include <Logger.h>
 #include <async/LockGuard.h>
+#include <cassert>
 
 using namespace ravensnight::logging;
 using namespace ravensnight::midi;
 using namespace ravensnight::async;
 
-VoiceReceiver::VoiceReceiver(VoiceCallback* cb) : _lock("VoiceReceiver") {
+VoiceReceiver::VoiceReceiver(VoiceCallback* cb) : _mutex("VoiceReceiver") {
     _cb = cb;
+    assert(_cb != 0);
 }
 
 VoiceReceiver::~VoiceReceiver() {
@@ -36,18 +38,13 @@ bool VoiceReceiver::accepted(CINType type) {
     }    
 }
 
-bool VoiceReceiver::ready() {
-    return !_lock.isLocked();
-}
-
 void VoiceReceiver::handle(const MidiEvent& evt) {
+    acquirelock(_mutex);
 
-    if ((_cb == 0) || (!accepted(evt.type)) || (evt.msgLength < 3) || _lock.isLocked()) {
+    if ((!accepted(evt.type)) || (evt.msgLength < 3)) {
         Logger::warn("Cannot handle message: type=%d, len=%d", evt.type, evt.msgLength);
         return;
     }
-
-    acquirelock(_lock);
 
     uint8_t status = evt.msg[0];
     uint8_t value1 = evt.msg[1];

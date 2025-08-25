@@ -36,6 +36,9 @@ RolandSysexHandler::~RolandSysexHandler() {
 }
 
 void RolandSysexHandler::reset() {
+
+    Logger::debug("Reset state machine.");
+
     _reqBuffer.reset();
     _reqChecksum.reset();
     _reqCommand = Command::undefined;
@@ -158,24 +161,30 @@ void RolandSysexHandler::append(uint8_t byte) {
 
 void RolandSysexHandler::commit() {
 
+    Logger::debug("RolandSysexHandler::commit - begin.");
+
     Result res = Result::error;
     if (_stage == Stage::complete) {
         BufferInputStream payload(_reqBuffer);
 
         switch (_reqCommand) {            
             case Command::read:
+                Logger::debug("RolandSysexHandler::commit - call read.");
                 handleCmdRead(_reqAddress, payload);
                 break;
 
             case Command::write:
+                Logger::debug("RolandSysexHandler::commit - call write.");
                 handleCmdWrite(_reqAddress, payload);
                 break;
 
             default:
+                Logger::debug("RolandSysexHandler::commit - unknown type.");
                 break;    
         }
     }
 
+    Logger::debug("RolandSysexHandler::commit - Call reset.");
     reset();
 }
 
@@ -184,34 +193,33 @@ bool RolandSysexHandler::ready() {
 }
 
 void RolandSysexHandler::sendReply(RolandSysexAddr& targetAddr, const uint8_t* decodedPayload, size_t len) {
-        Logger::dump("Roland:Sysex:Read - Received record:", decodedPayload, len, 0);        
+    Logger::dump("Roland:Sysex:Read - Received record:", decodedPayload, len, 0);        
 
-        // create midi buffer with correct size
-        Converter* conv = _conv[_reqAddressInfo.recordEncoding];
-        size_t encodedSize = conv->getEncodedSize(len);
+    // create midi buffer with correct size
+    Converter* conv = _conv[_reqAddressInfo.recordEncoding];
+    size_t encodedSize = conv->getEncodedSize(len);
 
-        BufferOutputStream midiOut(ROLAND_SYSEX_HDR_SIZE + encodedSize + 1);
+    BufferOutputStream midiOut(ROLAND_SYSEX_HDR_SIZE + encodedSize + 1);
 
-        // copy full header
-        midiOut << _cb->getDeviceID();
-        midiOut << _cb->getModelID();
-        midiOut << (uint8_t)Command::write;
-        midiOut << targetAddr;
+    // copy full header
+    midiOut << _cb->getDeviceID();
+    midiOut << _cb->getModelID();
+    midiOut << (uint8_t)Command::write;
+    midiOut << targetAddr;
 
-        // convert record data to midi buffer
-        Logger::debug("Roland:Sysex:Read - Encode record: %d > %d", len, encodedSize);        
-        conv->encode(midiOut, decodedPayload, len);
+    // convert record data to midi buffer
+    Logger::debug("Roland:Sysex:Read - Encode record: %d > %d", len, encodedSize);        
+    conv->encode(midiOut, decodedPayload, len);
 
-        // create checksum
-        RolandSysexChecksum checksum;
-        checksum.add(midiOut.buffer().bytesAt(3), 3 + encodedSize);  // skip deviceID, modelID, command; use address bytes (3) + encodedSize
+    // create checksum
+    RolandSysexChecksum checksum;
+    checksum.add(midiOut.buffer().bytesAt(3), 3 + encodedSize);  // skip deviceID, modelID, command; use address bytes (3) + encodedSize
 
-        // add checksum to buffer
-        midiOut << checksum;
+    // add checksum to buffer
+    midiOut << checksum;
 
-        Logger::debug("Roland:Sysex:Read - Send sysex checksum:%x len:%d.", checksum.value(), midiOut.buffer().length());        
-        _out->sendSysEx(ROLAND_SYSEX_MAN_CODE, midiOut.buffer());
-
+    Logger::debug("Roland:Sysex:Read - Send sysex checksum:%x len:%d.", checksum.value(), midiOut.buffer().length());        
+    _out->sendSysEx(ROLAND_SYSEX_MAN_CODE, midiOut.buffer());
 }
 
 void RolandSysexHandler::handleCmdRead(RolandSysexAddr& addr, BufferInputStream& inputStream) {
@@ -285,6 +293,7 @@ void RolandSysexHandler::handleCmdWrite(RolandSysexAddr& addr, BufferInputStream
 
     // send ack, if required for this address.
     if (_reqAddressInfo.replyAck) {
+        Logger::debug("Roland:Sysex:Write - Send Ack reply.");
 
         BufferOutputStream ackStream(ACK_REPLY_SIZE);
         ackStream << addr;

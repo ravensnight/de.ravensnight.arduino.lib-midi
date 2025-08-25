@@ -3,7 +3,7 @@
 
 #include <midi/MidiReceiver.h>
 #include <midi/SysexHandler.h>
-#include <async/WeakLock.h>
+#include <async/Mutex.h>
 
 using namespace ravensnight::async;
 namespace ravensnight::midi {
@@ -11,7 +11,7 @@ namespace ravensnight::midi {
 
         private:
 
-            WeakLock        _lock;
+            Mutex _mutex;
             SysexHandler*   _handler;
 
             bool accepted(CINType type);
@@ -21,8 +21,6 @@ namespace ravensnight::midi {
 
             SysexReceiver(SysexHandler* handler);
             ~SysexReceiver();
-
-            bool ready();
 
             void handle(const MidiEvent& event);
     };

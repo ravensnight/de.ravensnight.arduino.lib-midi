@@ -189,6 +189,8 @@ uint8_t MidiDevice::getPacketLen(CINType tp) {
 
 void MidiDevice::receive() {
 
+    // acquirelock(_mutex);
+
     MidiEvent event = {
         .type = CINType::Reserved,
         .cable = 0,
@@ -196,13 +198,13 @@ void MidiDevice::receive() {
         .msgLength = 0
     };
 
-    size_t count = 0;
     while (tud_midi_n_packet_read(0, _packet)) {
 
         uint8_t header = _packet[0];
         event.type = (CINType)(0x0F & header);
         if ((event.type == CINType::Reserved) || (event.type == CINType::CableEvent)) {
             // some invalid event. skip
+            Logger::dump("Ignore packet.", _packet, 4, 0);
             continue;
         }
 
@@ -211,9 +213,6 @@ void MidiDevice::receive() {
         if (event.cable < cableCount) {            
             MidiReceiver* r = cables[event.cable].receiver;
 
-            // wait for receiver being ready.
-            while (!r->ready());
-
             event.msgLength = getPacketLen(event.type);
             memset(event.msg, 0, 3);
             memcpy(event.msg, _packet + 1, event.msgLength);
@@ -221,7 +220,6 @@ void MidiDevice::receive() {
             // Logger::debug("Received midi packet cable: %d, type: %d size: %d", event.cable, event.type, event.msgLength);
             // Logger::dump("Midi packet msg: ", event.msg, event.msgLength, 0);
             r->handle(event);
-            count += event.msgLength;
         }
     }
 }
@@ -264,3 +262,4 @@ uint8_t MidiDevice::cableCount = 0;
 uint8_t MidiDevice::nameIndex = 0;
 CableDef MidiDevice::cables[MAX_CABLE_COUNT];
 uint8_t MidiDevice::_packet[4] = { 0 };
+Mutex MidiDevice::_mutex("midi");

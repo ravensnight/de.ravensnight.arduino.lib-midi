@@ -7,8 +7,9 @@
 using namespace ravensnight::midi;
 using namespace ravensnight::logging;
 
-SysexReceiver::SysexReceiver(SysexHandler* handler) : _lock("SysexReceiver") {
+SysexReceiver::SysexReceiver(SysexHandler* handler) : _mutex("SysexReceiver") {
     _handler = handler;    
+    assert(_handler != 0);
 }
 
 SysexReceiver::~SysexReceiver() {
@@ -35,27 +36,30 @@ void SysexReceiver::unsafeAppend(const uint8_t* buffer, uint8_t len) {
     }
 }
 
-bool SysexReceiver::ready() {
-    return !_lock.isLocked();
-}
-
 void SysexReceiver::handle(const MidiEvent& evt) {
-    if (!accepted(evt.type) || _handler == 0 || _lock.isLocked()) return;
-    acquirelock(_lock);
+    acquirelock(_mutex);
 
-    // Logger::debug("SysexReceiver::handle - msg:[%02x, %02x, %02x] len:%d", evt.msg[0], evt.msg[1], evt.msg[2], evt.msgLength);
+    if (!accepted(evt.type)) {
+        Logger::dump("SysexReceiver::handle - skipped unknown content:", evt.msg, evt.msgLength, 0);
+        return;
+    }
 
     switch (evt.type) {
         case CINType::SysexStart:  {
-            // Logger::debug("SysexReceiver::handle - start/continue. size: %d", evt.msgLength);
             if (evt.msg[0] == 0xF0) {   // first byte
+                Logger::debug("SysexReceiver::handle[start]. size: %d", evt.msgLength);                    
                 _handler->init();
                 if (_handler->ready()) {
                     unsafeAppend(evt.msg + 1, evt.msgLength - 1);
+                } else {
+                    Logger::warn("SysexReceiver::handle[start]. not ready!");                    
                 }
             } else {
+                Logger::debug("SysexReceiver::handle[continue]. size: %d", evt.msgLength);                    
                 if (_handler->ready()) {
                     unsafeAppend(evt.msg, evt.msgLength);
+                } else {
+                    Logger::warn("SysexReceiver::handle[continue]. not ready!");                    
                 }
             }
             break;
@@ -64,7 +68,7 @@ void SysexReceiver::handle(const MidiEvent& evt) {
         case CINType::SysexEnd1: 
         case CINType::SysexEnd2:
         case CINType::SysexEnd3:
-            // RecordInfoLogger::debug("SysexReceiver::handle - end. size: %d", evt.msgLength);
+            Logger::debug("SysexReceiver::handle[end]. size: %d", evt.msgLength);
             if (_handler->ready()) {
                 uint8_t last = evt.msgLength - 1;
                 if (evt.msg[last] == 0xF7) {
@@ -73,7 +77,11 @@ void SysexReceiver::handle(const MidiEvent& evt) {
                     }
 
                     _handler->commit();
+                } else {
+                    Logger::warn("SysexReceiver::handle[end]. Last element not 0xF7.");                    
                 }
+            } else {
+                Logger::warn("SysexReceiver::handle[end]. not ready!");                    
             }
             break;
 

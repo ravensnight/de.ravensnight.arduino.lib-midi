@@ -12,9 +12,9 @@
             "type": "platformio-debug",
             "request": "launch",
             "name": "PIO Debug",
-            "executable": "/mnt/data/prj/synthhead/mc1210f/software/de.ravensnight.arduino.lib-midi/.pio/build/lib-midi/firmware.elf",
+            "executable": "F:/prj/synthhead/mc1210f/software/de.ravensnight.arduino.lib-midi/.pio/build/lib-midi/firmware.elf",
             "projectEnvName": "lib-midi",
-            "toolchainBinDir": "/home/waldwuffel/.platformio/packages/toolchain-xtensa-esp32s3/bin",
+            "toolchainBinDir": "C:/Users/rjndr/.platformio/packages/toolchain-xtensa-esp32s3/bin",
             "internalConsoleOptions": "openOnSessionStart",
             "preLaunchTask": {
                 "type": "PlatformIO",
@@ -25,18 +25,18 @@
             "type": "platformio-debug",
             "request": "launch",
             "name": "PIO Debug (skip Pre-Debug)",
-            "executable": "/mnt/data/prj/synthhead/mc1210f/software/de.ravensnight.arduino.lib-midi/.pio/build/lib-midi/firmware.elf",
+            "executable": "F:/prj/synthhead/mc1210f/software/de.ravensnight.arduino.lib-midi/.pio/build/lib-midi/firmware.elf",
             "projectEnvName": "lib-midi",
-            "toolchainBinDir": "/home/waldwuffel/.platformio/packages/toolchain-xtensa-esp32s3/bin",
+            "toolchainBinDir": "C:/Users/rjndr/.platformio/packages/toolchain-xtensa-esp32s3/bin",
             "internalConsoleOptions": "openOnSessionStart"
         },
         {
             "type": "platformio-debug",
             "request": "launch",
             "name": "PIO Debug (without uploading)",
-            "executable": "/mnt/data/prj/synthhead/mc1210f/software/de.ravensnight.arduino.lib-midi/.pio/build/lib-midi/firmware.elf",
+            "executable": "F:/prj/synthhead/mc1210f/software/de.ravensnight.arduino.lib-midi/.pio/build/lib-midi/firmware.elf",
             "projectEnvName": "lib-midi",
-            "toolchainBinDir": "/home/waldwuffel/.platformio/packages/toolchain-xtensa-esp32s3/bin",
+            "toolchainBinDir": "C:/Users/rjndr/.platformio/packages/toolchain-xtensa-esp32s3/bin",
             "internalConsoleOptions": "openOnSessionStart",
             "loadMode": "manual"
         }
