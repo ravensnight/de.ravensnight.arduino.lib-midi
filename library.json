@@ -1,6 +1,6 @@
 {
   "name": "ravensnight lib-midi",
-  "version": "2.5.7",
+  "version": "2.5.8",
   "description": "Defines a midi IO framework with Roland SysEx API support.",
   "keywords": "midi sysex roland",
   "repository" : {
