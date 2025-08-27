@@ -3,12 +3,11 @@
 
 using namespace ravensnight::midi;
 
-MidiQueue::MidiQueue(const char* name, uint8_t cable, size_t qLength, uint32_t qWaitTimeMS, uint8_t taskPriority, uint32_t taskStackSize) : 
+MidiQueue::MidiQueue(const char* name, size_t qLength, uint32_t qWaitTimeMS) : 
     _mutex(name),
-    _clientTask(name, taskPriority, taskStackSize)
+    _clientTask(name)
 {
     _queue = new Queue<MidiEvent>(qLength, false, qWaitTimeMS);
-    _cable = cable & 0xFF;
 }
 
 MidiQueue::~MidiQueue() {
@@ -36,28 +35,37 @@ bool MidiQueue::install() {
     }
 
     this->_queue->install();
-    
+
     _listener = new QueueListener<MidiEvent>(_queue, _sink, false);
-    _clientTask.start(_listener);
+    _clientTask.start(_listener, _taskPriority, _taskStackSize);
 
     return true;
 }
 
 void MidiQueue::set(MidiReceiver* receiver) {
+    this->set(receiver, MIDITASK_DEFAULT_PRIORITY, MIDITASK_DEFAULT_STACKSIZE);
+}
+
+void MidiQueue::set(MidiReceiver* receiver, uint8_t taskPriority, uint32_t stackSize) {
+    if (receiver == 0) {
+        Logger::warn("Receiver must not be NULL");
+        return;
+    }
+
     acquirelock(_mutex);
 
-    if (_sink != 0) {
+    if (_sink != 0) {        
         delete _sink;
     }
 
     _sink = new MidiSink(receiver);
+    _taskPriority = taskPriority;
+    _taskStackSize = stackSize;
 }
 
 /**
  * Send one event to queue
  */
 void MidiQueue::handle(const MidiEvent& evt) {
-    if ((evt.cable == _cable) || _cable < 0) {
-        _queue->push(evt);
-    }
+    _queue->push(evt);
 }

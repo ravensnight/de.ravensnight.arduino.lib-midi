@@ -14,6 +14,9 @@
 
 using namespace ravensnight::async;
 
+#define MIDITASK_DEFAULT_PRIORITY 3
+#define MIDITASK_DEFAULT_STACKSIZE 2048
+
 namespace ravensnight::midi {
 
     class MidiQueue : public MidiReceiver {
@@ -21,7 +24,8 @@ namespace ravensnight::midi {
         private:
 
             Mutex _mutex;
-            int8_t _cable;
+            uint8_t _taskPriority = MIDITASK_DEFAULT_PRIORITY;
+            uint32_t _taskStackSize = MIDITASK_DEFAULT_STACKSIZE;
 
             Queue<MidiEvent> *_queue = 0;
             Task _clientTask;
@@ -33,13 +37,10 @@ namespace ravensnight::midi {
             /**
              * Create a midi queue that receives events only for the given cable
              * @param name the name of the queue, this name will be taken for client task and mutex
-             * @param cable the cable to accept messages for, put -1 to receive all
              * @param qLength the length of the queue
              * @param qWaitTimeMS the time to wait for pushing a message to queue, if full.
-             * @param taskPriority the priority of the listener/client task.
-             * @param taskStackSize the stack size required by the receiver being set.
              */
-            MidiQueue(const char* name, uint8_t cable, size_t qLength, uint32_t qWaitTimeMS, uint8_t taskPriority, uint32_t taskStackSize);
+            MidiQueue(const char* name, size_t qLength, uint32_t qWaitTimeMS);
 
             /**
              * Cleanup
@@ -47,9 +48,18 @@ namespace ravensnight::midi {
             ~MidiQueue();
 
             /**
-             * Bind the receiver that will get the midi messages asynchronously.
+             * Set a receiver and use default task settings.
+             * @see #set( MidiReceiver*, uint8_t, uint32_t )
              */
             void set(MidiReceiver* receiver);
+
+            /**
+             * Bind the receiver that will get the midi messages asynchronously.
+             * @param receiver the listener
+             * @param taskPriority the priority of the listener/client task.
+             * @param taskStackSize the stack size required by the receiver being set.
+             */
+            void set(MidiReceiver* receiver, uint8_t taskPriority, uint32_t stackSize);
 
             /**
              * Put a midi event to the queue.
