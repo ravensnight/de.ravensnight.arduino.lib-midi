@@ -10,13 +10,16 @@ using namespace ravensnight::async;
 
 namespace ravensnight::midi {
 
+    /**
+     * Defines the Q-Receiver for midi events. This class is used by MidiQueue.
+     */
     class MidiSink : public Receiver<MidiEvent> {
         private:
             MidiReceiver* _receiver;
 
         public:
 
-            MidiSink(MidiReceiver& receiver);
+            MidiSink(MidiReceiver* receiver);
             void handle(const MidiEvent& evt);
 
     };
