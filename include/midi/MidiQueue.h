@@ -8,7 +8,7 @@
 #include <midi/MidiReceiver.h>
 
 #include <async/Mutex.h>
-#include <async/Task.h>
+#include <async/Service.h>
 #include <async/Queue.hpp>
 #include <async/QueueListener.hpp>
 
@@ -19,18 +19,22 @@ using namespace ravensnight::async;
 
 namespace ravensnight::midi {
 
-    class MidiQueue : public MidiReceiver {
+    class MidiQueue : public MidiReceiver, Service {
 
         private:
 
-            Mutex _mutex;
             uint8_t _taskPriority = MIDITASK_DEFAULT_PRIORITY;
             uint32_t _taskStackSize = MIDITASK_DEFAULT_STACKSIZE;
 
+            Mutex _mutex;
             Queue<MidiEvent> *_queue = 0;
-            Task _clientTask;
             MidiSink* _sink = 0;
-            QueueListener<MidiEvent>* _listener = 0;
+
+        protected:
+
+            uint32_t getStackSize();
+            uint8_t  getPriority();       
+            Runnable* createRunnable();
 
         public:
 
@@ -67,10 +71,14 @@ namespace ravensnight::midi {
             void handle(const MidiEvent& event);
 
             /**
-             * Setup and install the queue.
+             * Overrides
              */
             bool install();
 
+            /**
+             * Overrides
+             */
+            void uninstall();
     };
 
 }
