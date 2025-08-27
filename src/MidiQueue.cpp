@@ -3,34 +3,21 @@
 
 using namespace ravensnight::midi;
 
-MidiQueue::MidiQueue(const char* name, size_t qLength, uint32_t qWaitTimeMS) : Service(name), _mutex(name) {
+MidiQueue::MidiQueue(const char* name, size_t qLength, uint32_t qWaitTimeMS) : Service(name) {
     _queue = new Queue<MidiEvent>(qLength, false, qWaitTimeMS);
 }
 
-MidiQueue::~MidiQueue() {
-    if (_sink != 0) {
-        delete _sink;
-    }
-}
-
-bool MidiQueue::install() {    
-    acquirelock(_mutex);
+bool MidiQueue::preInstall() {    
 
     if (_sink == 0) {
         Logger::warn("No Receiver had been set. Cannot (re)install.");
         return false;
     }
 
-    this->_queue->install();
-
-    Service::install();
-    return true;
+    return this->_queue->install();
 }
 
-void MidiQueue::uninstall() {    
-    Service::uninstall();
-
-    acquirelock(_mutex);
+void MidiQueue::postUninstall() {    
     if (_sink != 0) {
         delete _sink;
         _sink = 0;
@@ -47,7 +34,6 @@ void MidiQueue::set(MidiReceiver* receiver, uint8_t taskPriority, uint32_t stack
         return;
     }
 
-    acquirelock(_mutex);
     if (_sink != 0) {        
         delete _sink;
     }

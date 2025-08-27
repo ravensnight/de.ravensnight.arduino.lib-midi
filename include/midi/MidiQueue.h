@@ -19,14 +19,13 @@ using namespace ravensnight::async;
 
 namespace ravensnight::midi {
 
-    class MidiQueue : public MidiReceiver, Service {
+    class MidiQueue : public MidiReceiver, public Service {
 
         private:
 
             uint8_t _taskPriority = MIDITASK_DEFAULT_PRIORITY;
             uint32_t _taskStackSize = MIDITASK_DEFAULT_STACKSIZE;
 
-            Mutex _mutex;
             Queue<MidiEvent> *_queue = 0;
             MidiSink* _sink = 0;
 
@@ -35,6 +34,9 @@ namespace ravensnight::midi {
             uint32_t getStackSize();
             uint8_t  getPriority();       
             Runnable* createRunnable();
+
+            bool preInstall();
+            void postUninstall();
 
         public:
 
@@ -45,11 +47,6 @@ namespace ravensnight::midi {
              * @param qWaitTimeMS the time to wait for pushing a message to queue, if full.
              */
             MidiQueue(const char* name, size_t qLength, uint32_t qWaitTimeMS);
-
-            /**
-             * Cleanup
-             */
-            ~MidiQueue();
 
             /**
              * Set a receiver and use default task settings.
@@ -70,15 +67,6 @@ namespace ravensnight::midi {
              */
             void handle(const MidiEvent& event);
 
-            /**
-             * Overrides
-             */
-            bool install();
-
-            /**
-             * Overrides
-             */
-            void uninstall();
     };
 
 }
