@@ -23,24 +23,34 @@ MidiQueue::~MidiQueue() {
 }
 
 bool MidiQueue::install() {    
-    return this->_queue->install();
-}
-
-void MidiQueue::set(MidiReceiver* receiver) {
     acquirelock(_mutex);
+
+    if (_sink == 0) {
+        Logger::warn("No Receiver had been set. Cannot (re)install.");
+        return false;
+    }
 
     if (_listener != 0) {
         _clientTask.kill();
         delete _listener;
     }
 
+    this->_queue->install();
+    
+    _listener = new QueueListener<MidiEvent>(_queue, _sink, false);
+    _clientTask.start(_listener);
+
+    return true;
+}
+
+void MidiQueue::set(MidiReceiver* receiver) {
+    acquirelock(_mutex);
+
     if (_sink != 0) {
         delete _sink;
     }
 
     _sink = new MidiSink(receiver);
-    _listener = new QueueListener<MidiEvent>(_queue, _sink, false);
-    _clientTask.start(_listener);
 }
 
 /**
