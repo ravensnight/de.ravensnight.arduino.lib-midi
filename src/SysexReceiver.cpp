@@ -55,7 +55,7 @@ void SysexReceiver::handle(const MidiEvent& evt) {
                     _logger.warn("SysexReceiver::handle[start]. not ready!");                    
                 }
             } else {
-                _logger.debug("SysexReceiver::handle[continue]. size: %d", evt.msgLength);                    
+                _logger.trace("SysexReceiver::handle[continue]. size: %d", evt.msgLength);                    
                 if (_handler->ready()) {
                     unsafeAppend(evt.msg, evt.msgLength);
                 } else {
