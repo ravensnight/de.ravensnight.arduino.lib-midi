@@ -1,6 +1,6 @@
 {
   "name": "ravensnight lib-midi",
-  "version": "2.6.0",
+  "version": "2.6.1",
   "description": "Defines a midi IO framework with Roland SysEx API support.",
   "keywords": "midi sysex roland",
   "repository" : {
@@ -19,17 +19,17 @@
   "dependencies": [
     {
       "name": "ravensnight lib-logging",
-      "version": "1.4.0",
+      "version": "1.4.1",
       "platforms": [ "espressif32"]
     },
     {
       "name": "ravensnight lib-async",
-      "version": "1.4.0",
+      "version": "1.4.1",
       "platforms": [ "espressif32"]
     },
     {
       "name": "ravensnight lib-utils",
-      "version": "1.4.1",
+      "version": "1.4.2",
       "platforms": [ "espressif32"]
     }
   ],
