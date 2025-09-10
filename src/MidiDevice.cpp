@@ -1,5 +1,5 @@
 #include <esp32-hal-tinyusb.h>
-#include <Logger.h>
+#include <midi/LoggerConfig.h>
 #include <midi/MidiDevice.h>
 #include <async/LockGuard.h>
 
@@ -27,22 +27,22 @@ void MidiDevice::usbCallback(void *arg, esp_event_base_t event_base, int32_t eve
         arduino_usb_event_data_t *data = (arduino_usb_event_data_t *)event_data;
         switch (event_id) {
             case ARDUINO_USB_STARTED_EVENT:
-                Logger::info("USB PLUGGED");
+                _logger.info("USB PLUGGED");
                 _available = true;
                 break;
 
             case ARDUINO_USB_STOPPED_EVENT:
-                Logger::info("USB UNPLUGGED");
+                _logger.info("USB UNPLUGGED");
                 _available = false;
                 break;
 
             case ARDUINO_USB_SUSPEND_EVENT:
-                Logger::info("USB SUSPENDED: remote_wakeup_en: %d", data->suspend.remote_wakeup_en);
+                _logger.info("USB SUSPENDED: remote_wakeup_en: %d", data->suspend.remote_wakeup_en);
                 _available = false;
                 break;
 
             case ARDUINO_USB_RESUME_EVENT:
-                Logger::info("USB RESUMED");
+                _logger.info("USB RESUMED");
                 _available = true;
                 break;
 
@@ -51,7 +51,7 @@ void MidiDevice::usbCallback(void *arg, esp_event_base_t event_base, int32_t eve
         }
     } 
     else if (event_base == USB_MIDI_EVENTS) {
-        Logger::debug("MIDI EVENT:  ID=%d, DATA=%d\r\n", event_id, (uint32_t)event_data);
+        _logger.debug("MIDI EVENT:  ID=%d, DATA=%d\r\n", event_id, (uint32_t)event_data);
     }
 }
 
@@ -189,8 +189,6 @@ uint8_t MidiDevice::getPacketLen(CINType tp) {
 
 void MidiDevice::receive() {
 
-    // acquirelock(_mutex);
-
     MidiEvent event = {
         .type = CINType::Reserved,
         .cable = 0,
@@ -204,12 +202,12 @@ void MidiDevice::receive() {
         event.type = (CINType)(0x0F & header);
         if ((event.type == CINType::Reserved) || (event.type == CINType::CableEvent)) {
             // some invalid event. skip
-            Logger::dump("Ignore packet.", _packet, 4, 0);
+            _logger.dump("Ignore packet.", _packet, 4, 0);
             continue;
         }
 
         event.cable = (header >> 4);
-        //Logger::debug("Received midi packet for pipe %d, cin: %02x", event.cable, event.type);
+        _logger.trace("Received midi packet for pipe %d, cin: %02x", event.cable, event.type);
         if (event.cable < cableCount) {            
             MidiReceiver* r = cables[event.cable].receiver;
 
@@ -217,8 +215,8 @@ void MidiDevice::receive() {
             memset(event.msg, 0, 3);
             memcpy(event.msg, _packet + 1, event.msgLength);
 
-            // Logger::debug("Received midi packet cable: %d, type: %d size: %d", event.cable, event.type, event.msgLength);
-            // Logger::dump("Midi packet msg: ", event.msg, event.msgLength, 0);
+            _logger.trace("Received midi packet cable: %d, type: %d size: %d", event.cable, event.type, event.msgLength);
+            _logger.dump("Midi packet msg: ", event.msg, event.msgLength, 0);
             r->handle(event);
         }
     }
@@ -228,7 +226,7 @@ size_t MidiDevice::publish(uint8_t cable, uint8_t* buffer, size_t size) {
     if (size == 0) return 0;
 
     if (!available()) {
-        Logger::debug("MidiDevice::publish - Do not write to midi out, since USB is not available.");
+        _logger.debug("MidiDevice::publish - Do not write to midi out, since USB is not available.");
         return 0;
     }
 
@@ -241,14 +239,14 @@ size_t MidiDevice::publish(uint8_t cable, uint8_t* buffer, size_t size) {
         if (sent == 0) {
             tries++;
             if (tries > MAX_TRIES_MIDIWRITE) {
-                Logger::error("MidiDevice::publish - Only %d bytes of %d could be sent.");
+                _logger.error("MidiDevice::publish - Only %d bytes of %d could be sent.");
                 return len;
             }
         } else {
             len += sent;
         }
 
-        Logger::debug("MidiDevice::publish - Sent %d bytes of %d", len, size);
+        _logger.debug("MidiDevice::publish - Sent %d bytes of %d", len, size);
     } while (len < size);
 
     return len;
@@ -262,4 +260,4 @@ uint8_t MidiDevice::cableCount = 0;
 uint8_t MidiDevice::nameIndex = 0;
 CableDef MidiDevice::cables[MAX_CABLE_COUNT];
 uint8_t MidiDevice::_packet[4] = { 0 };
-Mutex MidiDevice::_mutex("midi");
+ClassLogger MidiDevice::_logger(LC_MIDI_COMMON);

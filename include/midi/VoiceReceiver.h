@@ -1,18 +1,23 @@
 #ifndef __VOICE_RECEIVER_H__
 #define __VOICE_RECEIVER_H__
 
+#include <ClassLogger.h>
+
 #include <midi/MidiReceiver.h>
 #include <midi/VoiceCallback.h>
 
 #include <async/Mutex.h>
 
+using namespace ravensnight::logging;
 using namespace ravensnight::async;
+
 namespace ravensnight::midi {
 
     class VoiceReceiver : public MidiReceiver {
 
         private:
 
+            static ClassLogger _logger;
             Mutex _mutex;
             VoiceCallback* _cb;
             bool accepted(CINType type);

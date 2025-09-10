@@ -2,7 +2,8 @@
 #define __ROLAND_SYSEX_HDR_H__
 
 #include <Arduino.h>
-#include <StreamHelper.h>
+
+#include <utils/StreamHelper.h>
 #include <midi/RolandSysexAddr.h>
 
 namespace ravensnight::midi {

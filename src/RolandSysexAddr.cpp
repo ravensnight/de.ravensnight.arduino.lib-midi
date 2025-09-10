@@ -1,7 +1,8 @@
+#include <midi/LoggerConfig.h>
 #include <midi/RolandSysexAddr.h>
-#include <Logger.h>
 
 using namespace ravensnight::logging;
+
 namespace ravensnight::midi {
 
     Stream& operator << (Stream& os, const RolandSysexAddr& addr) {
@@ -26,7 +27,7 @@ namespace ravensnight::midi {
 
     RolandSysexChecksum& operator<<(RolandSysexChecksum& chksum, const RolandSysexAddr& addr) {
 
-        Logger::debug("Add address to checksum: %06x", addr.get());
+        RolandSysexAddr::_logger.trace("Add address to checksum: %06x", addr.get());
 
         chksum.add(addr.get7bitHSB());
         chksum.add(addr.get7bitMSB());
@@ -63,4 +64,5 @@ namespace ravensnight::midi {
         return (uint8_t)(_addr & 0x7F);
     }
 
+    ClassLogger RolandSysexAddr::_logger(LC_MIDI_COMMON);
 }

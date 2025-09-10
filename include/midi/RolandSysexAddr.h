@@ -2,12 +2,16 @@
 #define __ROLAND_SYSEX_ADDR_H__
 
 #include <Arduino.h>
+#include <ClassLogger.h>
+
 #include <midi/RolandSysexChecksum.h>
+
 namespace ravensnight::midi {
 
     class RolandSysexAddr {
         private:
 
+            static ClassLogger _logger;
             uint32_t  _addr;
 
         public:

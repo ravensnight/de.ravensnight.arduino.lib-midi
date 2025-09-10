@@ -1,10 +1,12 @@
 #include <esp32-hal-tinyusb.h>
+
+#include <utils/Masquerade.h>
+#include <utils/BufferOutputStream.h>
+#include <utils/BufferInputStream.h>
+
+#include <midi/LoggerConfig.h>
 #include <midi/MidiDevice.h>
 #include <midi/MidiTransmitter.h>
-#include <Masquerade.h>
-#include <BufferOutputStream.h>
-#include <BufferInputStream.h>
-#include <Logger.h>
 
 using namespace ravensnight::midi;
 using namespace ravensnight::logging;
@@ -127,7 +129,7 @@ void MidiTransmitter::sendMidiContinue() {
 size_t MidiTransmitter::sendSysEx(uint8_t channel, Buffer& message) {    
     uint16_t size = message.length() + 3; // + begin + channel + end
     if (size > _outBuffer.avail()) {
-        Logger::error("MidiTransmitter::sendSysEx - outbuffer size %d exceeded by payload size %d(%d). Cannot send sysex!", _outBuffer.avail(), size, message.length());
+        _logger.error("MidiTransmitter::sendSysEx - outbuffer size %d exceeded by payload size %d(%d). Cannot send sysex!", _outBuffer.avail(), size, message.length());
         return -1;
     }
 
@@ -138,9 +140,11 @@ size_t MidiTransmitter::sendSysEx(uint8_t channel, Buffer& message) {
     os << message;
     os << (uint8_t)MessageType::SysExEnd;
 
-    Logger::debug("Write sysex bytes. Len: %d", size);
-    // Logger::dump("Send SysEx bytes: ", _outBuffer.bytes(), size, 0);
+    _logger.debug("Write sysex bytes. Len: %d", size);
+    _logger.dump("Send SysEx bytes: ", _outBuffer.bytes(), size, 0);
     write(_outBuffer.bytes(), size);
 
     return size;
 }
+
+ClassLogger MidiTransmitter::_logger(LC_MIDI_COMMON);

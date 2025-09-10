@@ -3,7 +3,9 @@
 
 #include <Arduino.h>
 #include <Stream.h>
-#include <Buffer.h>
+
+#include <ClassLogger.h>
+#include <utils/Buffer.h>
 #include <midi/MidiDevice.h>
 
 using namespace ravensnight::utils;
@@ -12,6 +14,8 @@ namespace ravensnight::midi {
     class MidiTransmitter {
 
         private:
+            static ClassLogger _logger;
+
             uint8_t _cable;
             Buffer _outBuffer;
 

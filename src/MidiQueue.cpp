@@ -1,3 +1,4 @@
+#include <midi/LoggerConfig.h>
 #include <midi/MidiQueue.h>
 #include <async/LockGuard.h>
 
@@ -10,7 +11,7 @@ MidiQueue::MidiQueue(const char* name, size_t qLength, uint32_t qWaitTimeMS) : S
 bool MidiQueue::preInstall() {    
 
     if (_sink == 0) {
-        Logger::warn("No Receiver had been set. Cannot (re)install.");
+        _logger.warn("No Receiver had been set. Cannot (re)install.");
         return false;
     }
 
@@ -30,7 +31,7 @@ void MidiQueue::set(MidiReceiver* receiver) {
 
 void MidiQueue::set(MidiReceiver* receiver, uint8_t taskPriority, uint32_t stackSize) {
     if (receiver == 0) {
-        Logger::warn("Receiver must not be NULL");
+        _logger.warn("Receiver must not be NULL");
         return;
     }
 
@@ -65,3 +66,5 @@ Runnable* MidiQueue::createRunnable() {
 
     return 0;
 }
+
+ClassLogger MidiQueue::_logger(LC_MIDI_COMMON);

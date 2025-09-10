@@ -1,6 +1,7 @@
 #ifndef __SYSEX_RECEIVER_H__
 #define __SYSEX_RECEIVER_H__
 
+#include <ClassLogger.h>
 #include <midi/MidiReceiver.h>
 #include <midi/SysexHandler.h>
 #include <async/Mutex.h>
@@ -11,6 +12,7 @@ namespace ravensnight::midi {
 
         private:
 
+            static ClassLogger _logger;
             Mutex _mutex;
             SysexHandler*   _handler;
 

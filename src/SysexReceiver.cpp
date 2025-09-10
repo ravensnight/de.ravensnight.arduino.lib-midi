@@ -1,7 +1,7 @@
+#include <midi/LoggerConfig.h>
 #include <midi/SysexReceiver.h>
-#include <Buffer.h>
-#include <BufferInputStream.h>
-#include <Logger.h>
+#include <utils/Buffer.h>
+#include <utils/BufferInputStream.h>
 #include <async/LockGuard.h>
 
 using namespace ravensnight::midi;
@@ -24,7 +24,7 @@ bool SysexReceiver::accepted(CINType type) {
             return true;
 
         default:
-            // Logger::debug("SysexReceiver::accepted - reject evt type: %d", type);
+            _logger.trace("SysexReceiver::accepted - reject evt type: %d", type);
             return false;
     }
 }
@@ -40,26 +40,26 @@ void SysexReceiver::handle(const MidiEvent& evt) {
     acquirelock(_mutex);
 
     if (!accepted(evt.type)) {
-        Logger::dump("SysexReceiver::handle - skipped unknown content:", evt.msg, evt.msgLength, 0);
+        _logger.dump("SysexReceiver::handle - skipped unknown content:", evt.msg, evt.msgLength, 0);
         return;
     }
 
     switch (evt.type) {
         case CINType::SysexStart:  {
             if (evt.msg[0] == 0xF0) {   // first byte
-                Logger::debug("SysexReceiver::handle[start]. size: %d", evt.msgLength);                    
+                _logger.trace("SysexReceiver::handle[start]. size: %d", evt.msgLength);                    
                 _handler->init();
                 if (_handler->ready()) {
                     unsafeAppend(evt.msg + 1, evt.msgLength - 1);
                 } else {
-                    Logger::warn("SysexReceiver::handle[start]. not ready!");                    
+                    _logger.warn("SysexReceiver::handle[start]. not ready!");                    
                 }
             } else {
-                Logger::debug("SysexReceiver::handle[continue]. size: %d", evt.msgLength);                    
+                _logger.debug("SysexReceiver::handle[continue]. size: %d", evt.msgLength);                    
                 if (_handler->ready()) {
                     unsafeAppend(evt.msg, evt.msgLength);
                 } else {
-                    Logger::warn("SysexReceiver::handle[continue]. not ready!");                    
+                    _logger.warn("SysexReceiver::handle[continue]. not ready!");                    
                 }
             }
             break;
@@ -68,7 +68,7 @@ void SysexReceiver::handle(const MidiEvent& evt) {
         case CINType::SysexEnd1: 
         case CINType::SysexEnd2:
         case CINType::SysexEnd3:
-            Logger::debug("SysexReceiver::handle[end]. size: %d", evt.msgLength);
+            _logger.trace("SysexReceiver::handle[end]. size: %d", evt.msgLength);
             if (_handler->ready()) {
                 uint8_t last = evt.msgLength - 1;
                 if (evt.msg[last] == 0xF7) {
@@ -78,10 +78,10 @@ void SysexReceiver::handle(const MidiEvent& evt) {
 
                     _handler->commit();
                 } else {
-                    Logger::warn("SysexReceiver::handle[end]. Last element not 0xF7.");                    
+                    _logger.warn("SysexReceiver::handle[end]. Last element not 0xF7.");                    
                 }
             } else {
-                Logger::warn("SysexReceiver::handle[end]. not ready!");                    
+                _logger.warn("SysexReceiver::handle[end]. not ready!");                    
             }
             break;
 
@@ -89,3 +89,5 @@ void SysexReceiver::handle(const MidiEvent& evt) {
             break;
     }
 }
+
+ClassLogger SysexReceiver::_logger(LC_MIDI_SYSEX);

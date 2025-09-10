@@ -3,6 +3,8 @@
 
 #include <Arduino.h>
 
+#include <ClassLogger.h>
+
 #include <midi/MidiCommon.h>
 #include <midi/MidiSink.h>
 #include <midi/MidiReceiver.h>
@@ -22,6 +24,8 @@ namespace ravensnight::midi {
     class MidiQueue : public MidiReceiver, public Service {
 
         private:
+
+            static ClassLogger _logger;
 
             uint8_t _taskPriority = MIDITASK_DEFAULT_PRIORITY;
             uint32_t _taskStackSize = MIDITASK_DEFAULT_STACKSIZE;

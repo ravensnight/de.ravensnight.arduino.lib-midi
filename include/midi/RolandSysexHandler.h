@@ -1,14 +1,15 @@
 #ifndef __ROLAND_SYSEX_HANDLER_H__
 #define __ROLAND_SYSEX_HANDLER_H__
 
+#include <ClassLogger.h>
+#include <utils/Converter.h>
+#include <utils/BufferInputStream.h>
+
 #include <midi/MidiTransmitter.h>
 #include <midi/SysexHandler.h>
 #include <midi/RolandSysexCallback.h>
-#include <Converter.h>
 
-#include <BufferInputStream.h>
-#include <async/Mutex.h>
-
+using namespace ravensnight::logging;
 using namespace ravensnight::async;
 using namespace ravensnight::utils;
 
@@ -38,6 +39,8 @@ namespace ravensnight::midi {
             bool ready();
 
         private:
+
+            static ClassLogger _logger;
 
             RolandSysexAddr     _reqAddress;
             RolandSysexChecksum _reqChecksum;

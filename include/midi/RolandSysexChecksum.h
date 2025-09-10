@@ -2,7 +2,7 @@
 #define __RolandSysexChecksum_h__
 
 #include <Arduino.h>
-#include <Buffer.h>
+#include <utils/Buffer.h>
 
 using namespace ravensnight::utils;
 namespace ravensnight::midi {
@@ -25,8 +25,6 @@ namespace ravensnight::midi {
             uint8_t value() const;
 
             friend RolandSysexChecksum& operator<<(RolandSysexChecksum& chksum, uint8_t value);
-            friend RolandSysexChecksum& operator<<(RolandSysexChecksum& chksum, Buffer& buffer);
-
             friend Stream& operator<<(Stream& os, const RolandSysexChecksum& chksum);
 
     };

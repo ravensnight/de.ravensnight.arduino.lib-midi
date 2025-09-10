@@ -1,7 +1,8 @@
-#include <midi/VoiceReceiver.h>
-#include <Logger.h>
-#include <async/LockGuard.h>
 #include <cassert>
+
+#include <midi/LoggerConfig.h>
+#include <midi/VoiceReceiver.h>
+#include <async/LockGuard.h>
 
 using namespace ravensnight::logging;
 using namespace ravensnight::midi;
@@ -42,7 +43,7 @@ void VoiceReceiver::handle(const MidiEvent& evt) {
     acquirelock(_mutex);
 
     if ((!accepted(evt.type)) || (evt.msgLength < 3)) {
-        Logger::warn("Cannot handle message: type=%d, len=%d", evt.type, evt.msgLength);
+        _logger.warn("Cannot handle message: type=%d, len=%d", evt.type, evt.msgLength);
         return;
     }
 
@@ -111,7 +112,9 @@ void VoiceReceiver::handle(const MidiEvent& evt) {
         break;
 
     default:
-        Logger::debug("Unhandled voice command: %x. Skip.", command);
+        _logger.debug("Unhandled voice command: %x. Skip.", command);
         break;
     }     
 }
+
+ClassLogger VoiceReceiver::_logger(LC_MIDI_VOICE);

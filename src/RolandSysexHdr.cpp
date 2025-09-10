@@ -1,6 +1,7 @@
+#include <utils/StreamHelper.h>
+
 #include <midi/RolandSysexHdr.h>
 #include <midi/RolandSysexAddr.h>
-#include <StreamHelper.h>
 
 using namespace ravensnight::utils;
 namespace ravensnight::midi {
