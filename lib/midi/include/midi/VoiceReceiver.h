@@ -1,7 +1,7 @@
 #ifndef __VOICE_RECEIVER_H__
 #define __VOICE_RECEIVER_H__
 
-#include <ClassLogger.h>
+#include <Logger.h>
 
 #include <midi/MidiReceiver.h>
 #include <midi/VoiceCallback.h>
@@ -19,7 +19,7 @@ namespace ravensnight::midi {
 
         private:
 
-            static ClassLogger _logger;
+            static Logger _logger;
             Mutex _mutex;
             Ref<VoiceCallback> _cb;
             bool accepted(CINType type);

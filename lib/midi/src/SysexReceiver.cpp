@@ -4,8 +4,11 @@
 #include <utils/BufferInputStream.h>
 #include <async/LockGuard.h>
 
-using namespace ravensnight::midi;
 using namespace ravensnight::logging;
+
+namespace ravensnight::midi {
+
+Logger SysexReceiver::_logger(LC_MIDI_SYSEX);
 
 SysexReceiver::SysexReceiver(Ref<SysexHandler>& handler) : 
     _mutex("SysexReceiver"),
@@ -34,7 +37,7 @@ bool SysexReceiver::accepted(CINType type) {
 void SysexReceiver::unsafeAppend(const uint8_t* buffer, uint8_t len) {
     if (len == 0) return;
     for (uint8_t i = 0; i < len; i++) {
-        (*_handler).append(buffer[i]);
+        _handler->append(buffer[i]);
     }
 }
 
@@ -50,15 +53,15 @@ void SysexReceiver::handle(const MidiEvent& evt) {
         case CINType::SysexStart:  {
             if (evt.msg[0] == 0xF0) {   // first byte
                 _logger.trace("SysexReceiver::handle[start]. size: %d", evt.msgLength);                    
-                (*_handler).init();
-                if ((*_handler).ready()) {
+                _handler->init();
+                if (_handler->ready()) {
                     unsafeAppend(evt.msg + 1, evt.msgLength - 1);
                 } else {
                     _logger.warn("SysexReceiver::handle[start]. not ready!");                    
                 }
             } else {
                 _logger.trace("SysexReceiver::handle[continue]. size: %d", evt.msgLength);                    
-                if ((*_handler).ready()) {
+                if (_handler->ready()) {
                     unsafeAppend(evt.msg, evt.msgLength);
                 } else {
                     _logger.warn("SysexReceiver::handle[continue]. not ready!");                    
@@ -71,14 +74,14 @@ void SysexReceiver::handle(const MidiEvent& evt) {
         case CINType::SysexEnd2:
         case CINType::SysexEnd3:
             _logger.trace("SysexReceiver::handle[end]. size: %d", evt.msgLength);
-            if ((*_handler).ready()) {
+            if (_handler->ready()) {
                 uint8_t last = evt.msgLength - 1;
                 if (evt.msg[last] == 0xF7) {
                     if (last > 0) {
                         unsafeAppend(evt.msg, last);
                     }
 
-                    (*_handler).commit();
+                    _handler->commit();
                 } else {
                     _logger.warn("SysexReceiver::handle[end]. Last element not 0xF7.");                    
                 }
@@ -92,4 +95,4 @@ void SysexReceiver::handle(const MidiEvent& evt) {
     }
 }
 
-ClassLogger SysexReceiver::_logger(LC_MIDI_SYSEX);
+}

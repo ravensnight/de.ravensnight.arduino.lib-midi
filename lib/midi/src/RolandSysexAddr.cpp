@@ -5,6 +5,7 @@ using namespace ravensnight::logging;
 
 namespace ravensnight::midi {
 
+
     Stream& operator << (Stream& os, const RolandSysexAddr& addr) {
         os << addr.get7bitHSB();
         os << addr.get7bitMSB();
@@ -36,6 +37,8 @@ namespace ravensnight::midi {
         return chksum;
     }
 
+    Logger RolandSysexAddr::_logger(LC_MIDI_COMMON);
+
     RolandSysexAddr::RolandSysexAddr() {
         this->_addr = 0;
     }
@@ -64,5 +67,4 @@ namespace ravensnight::midi {
         return (uint8_t)(_addr & 0x7F);
     }
 
-    ClassLogger RolandSysexAddr::_logger(LC_MIDI_COMMON);
 }

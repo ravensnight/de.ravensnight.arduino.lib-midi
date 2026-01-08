@@ -1,7 +1,7 @@
 #ifndef __ROLAND_SYSEX_HANDLER_H__
 #define __ROLAND_SYSEX_HANDLER_H__
 
-#include <ClassLogger.h>
+#include <Logger.h>
 #include <utils/Converter.h>
 #include <utils/BufferInputStream.h>
 #include <utils/Ref.hpp>
@@ -41,7 +41,7 @@ namespace ravensnight::midi {
 
         private:
 
-            static ClassLogger _logger;
+            static Logger _logger;
 
             RolandSysexAddr     _reqAddress;
             RolandSysexChecksum _reqChecksum;

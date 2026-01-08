@@ -3,7 +3,6 @@
 #include <midi/MidiDevice.h>
 #include <async/LockGuard.h>
 
-using namespace ravensnight::midi;
 using namespace ravensnight::logging;
 
 #ifndef MIDI_ENDPOINT_NUMBER 
@@ -11,6 +10,19 @@ using namespace ravensnight::logging;
 #endif
 
 ESP_EVENT_DEFINE_BASE(USB_MIDI_EVENTS);
+
+namespace ravensnight::midi {
+
+MidiDevice MidiDevice::instance = MidiDevice();
+
+// static initializers
+bool MidiDevice::_available = false;
+uint8_t MidiDevice::cableCount = 0;
+uint8_t MidiDevice::nameIndex = 0;
+CableDef MidiDevice::cables[MAX_CABLE_COUNT];
+uint8_t MidiDevice::_packet[4] = { 0 };
+Logger MidiDevice::_logger(LC_MIDI_COMMON);
+
 
 MidiDevice::MidiDevice() {        
 }
@@ -252,12 +264,4 @@ size_t MidiDevice::publish(uint8_t cable, uint8_t* buffer, size_t size) {
     return len;
 }
 
-MidiDevice MidiDevice::instance = MidiDevice();
-
-// static initializers
-bool MidiDevice::_available = false;
-uint8_t MidiDevice::cableCount = 0;
-uint8_t MidiDevice::nameIndex = 0;
-CableDef MidiDevice::cables[MAX_CABLE_COUNT];
-uint8_t MidiDevice::_packet[4] = { 0 };
-ClassLogger MidiDevice::_logger(LC_MIDI_COMMON);
+}

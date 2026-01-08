@@ -8,6 +8,6 @@ namespace ravensnight::midi {
     }
 
     void MidiSink::handle(const MidiEvent& evt) {
-        (*_receiver).handle(evt);
+        _receiver->handle(evt);
     }
 }

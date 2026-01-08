@@ -8,8 +8,11 @@
 #include <midi/MidiDevice.h>
 #include <midi/MidiTransmitter.h>
 
-using namespace ravensnight::midi;
 using namespace ravensnight::logging;
+
+namespace ravensnight::midi {
+
+Logger MidiTransmitter::_logger(LC_MIDI_COMMON);
 
 MidiTransmitter::MidiTransmitter(uint8_t cable, size_t bufferSize) : _outBuffer(bufferSize)
 {  
@@ -104,7 +107,7 @@ void MidiTransmitter::sendModulationWheel(uint8_t chn, int16_t pitchValue) {
 }
 
 // ----------------------------------------------------------------------------
-// system messages
+// system messagesusing
 // ----------------------------------------------------------------------------
 void MidiTransmitter::sendSongPos(int16_t position) {
     send(MessageType::SongPos, 0, position);
@@ -147,4 +150,4 @@ size_t MidiTransmitter::sendSysEx(uint8_t channel, Buffer& message) {
     return size;
 }
 
-ClassLogger MidiTransmitter::_logger(LC_MIDI_COMMON);
+}

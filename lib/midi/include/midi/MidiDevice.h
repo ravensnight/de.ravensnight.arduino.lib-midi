@@ -6,7 +6,7 @@
 #include <esp32-hal-tinyusb.h>
 #include <USB.h>
 
-#include <ClassLogger.h>
+#include <Logger.h>
 #include <async/LockGuard.h>
 #include <midi/MidiCommon.h>
 #include <midi/MidiReceiver.h>
@@ -44,7 +44,7 @@ class MidiDevice {
 
     private:
     
-        static ClassLogger _logger;
+        static Logger _logger;
 
         static uint8_t cableCount;
         static CableDef cables[MAX_CABLE_COUNT];

@@ -5,8 +5,11 @@
 #include <async/LockGuard.h>
 
 using namespace ravensnight::logging;
-using namespace ravensnight::midi;
 using namespace ravensnight::async;
+
+namespace ravensnight::midi {
+
+Logger VoiceReceiver::_logger(LC_MIDI_VOICE);
 
 VoiceReceiver::VoiceReceiver(Ref<VoiceCallback>& cb) : 
     _mutex("VoiceReceiver"),
@@ -64,55 +67,53 @@ void VoiceReceiver::handle(const MidiEvent& evt) {
         command = (MessageType)status;
     }
 
-    VoiceCallback* cb = _cb.get();
-
     switch (command) { 
     case MessageType::NoteOn:
-        cb->onNoteOn(channel, value1, value2);
+        _cb->onNoteOn(channel, value1, value2);
         break;
 
     case MessageType::NoteOff:
-        cb->onNoteOff(channel, value1, value2);
+        _cb->onNoteOff(channel, value1, value2);
         break;
 
     case MessageType::Aftertouch:
-        cb->onAftertouch(channel, value1, value2);
+        _cb->onAftertouch(channel, value1, value2);
         break;
 
     case MessageType::ControlChange:
-        cb->onControlChange(channel, value1, value2);
+        _cb->onControlChange(channel, value1, value2);
         break;
 
     case MessageType::ProgramChange:
-        cb->onProgramSelect(channel, value1);
+        _cb->onProgramSelect(channel, value1);
         break;
 
     case MessageType::ChannelPressure:
-        cb->onChannelPressure(channel, value1);
+        _cb->onChannelPressure(channel, value1);
         break;
 
     case MessageType::ModulationWheel:
-        cb->onModulationWheel(channel, __14bit(value2, value1));
+        _cb->onModulationWheel(channel, __14bit(value2, value1));
         break;
 
     case MessageType::SongPos:                
-        cb->onSongPos(__14bit(value2, value1));
+        _cb->onSongPos(__14bit(value2, value1));
         break;
 
     case MessageType::SongSel:
-        cb->onSongSel(value1);
+        _cb->onSongSel(value1);
         break;
     
     case MessageType::MidiStart:
-        cb->onMidiStart();
+        _cb->onMidiStart();
         break;
 
     case MessageType::MidiStop:
-        cb->onMidiStop();
+        _cb->onMidiStop();
         break;
 
     case MessageType::MidiContinue:
-        cb->onMidiContinue();
+        _cb->onMidiContinue();
         break;
 
     default:
@@ -121,4 +122,4 @@ void VoiceReceiver::handle(const MidiEvent& evt) {
     }     
 }
 
-ClassLogger VoiceReceiver::_logger(LC_MIDI_VOICE);
+}

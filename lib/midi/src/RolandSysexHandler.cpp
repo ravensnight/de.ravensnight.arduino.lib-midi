@@ -12,8 +12,11 @@
 #include <utils/Masquerade.h>
 #include <utils/Base128.h>
 
-using namespace ravensnight::midi;
 using namespace ravensnight::logging;
+
+namespace ravensnight::midi { 
+
+Logger RolandSysexHandler::_logger(LC_MIDI_SYSEX);
 
 RolandSysexHandler::RolandSysexHandler(size_t bufferSize, Ref<RolandSysexCallback>& cb, Ref<MidiTransmitter>& writer) :
     _reqBuffer(bufferSize),
@@ -69,7 +72,7 @@ void RolandSysexHandler::append(uint8_t byte) {
             return;
 
         case Stage::device:
-            if (byte == (*_cb).getDeviceID()) {
+            if (byte == _cb->getDeviceID()) {
                 _stage = Stage::model;
             } else {
                 _logger.warn("RolandSysexHander::append - invalid device id: %02x", byte);
@@ -78,7 +81,7 @@ void RolandSysexHandler::append(uint8_t byte) {
             return;
 
         case Stage::model:
-            if (byte == (*_cb).getModelID()) {
+            if (byte == _cb->getModelID()) {
                 _stage = Stage::command;
             } else {
                 _logger.warn("RolandSysexHander::append - invalid model id: %02x", byte);
@@ -103,7 +106,7 @@ void RolandSysexHandler::append(uint8_t byte) {
             if (_reqBuffer.length() == ROLAND_SYSEX_ADDR_SIZE) {
                 BufferInputStream is(_reqBuffer);
                 is >> _reqAddress;
-                if ((*_cb).getAddressInfo(_reqAddress, _reqAddressInfo)) {
+                if (_cb->getAddressInfo(_reqAddress, _reqAddressInfo)) {
 
                     if (_reqCommand == Command::read) {
                         _reqPayloadSize = 3;
@@ -111,7 +114,7 @@ void RolandSysexHandler::append(uint8_t byte) {
                     } else {                         
                         // command write
                         RecordInfo info;
-                        (*_cb).getRecordInfo(_reqAddress, 0, info);
+                        _cb->getRecordInfo(_reqAddress, 0, info);
 
                         if (info.size == 0) {
                             // no payload directly jump to checksum
@@ -201,8 +204,8 @@ void RolandSysexHandler::sendReply(RolandSysexAddr& targetAddr, const uint8_t* d
     BufferOutputStream midiOut(ROLAND_SYSEX_HDR_SIZE + encodedSize + 1);
 
     // copy full header
-    midiOut << (*_cb).getDeviceID();
-    midiOut << (*_cb).getModelID();
+    midiOut << _cb->getDeviceID();
+    midiOut << _cb->getModelID();
     midiOut << (uint8_t)Command::write;
     midiOut << targetAddr;
 
@@ -246,7 +249,7 @@ void RolandSysexHandler::handleCmdRead(RolandSysexAddr& addr, BufferInputStream&
     RecordInfo recordInfo;
     for (int rec = 0; rec < _reqAddressInfo.recordCount; rec++) {
 
-        if (!(*_cb).getRecordInfo(addr, rec, recordInfo)) {
+        if (!_cb->getRecordInfo(addr, rec, recordInfo)) {
             _logger.warn("Invalid address / record num: %x > %x", addr.get(), rec);
             continue;
         }
@@ -261,7 +264,7 @@ void RolandSysexHandler::handleCmdRead(RolandSysexAddr& addr, BufferInputStream&
 
         // read data from model
         BufferOutputStream recordStream(recordInfo.size);
-        Result res = (*_cb).readFromModel(recordInfo.addr, recordStream); 
+        Result res = _cb->readFromModel(recordInfo.addr, recordStream); 
 
         if (res == Result::next || res == Result::success) {
             sendReply(recordInfo.addr, recordStream.buffer().bytes(), recordStream.buffer().length());
@@ -288,7 +291,7 @@ void RolandSysexHandler::handleCmdWrite(RolandSysexAddr& addr, BufferInputStream
 
     _logger.debug("Roland:Sysex:Write - write decoded buffer to model.");
     BufferInputStream is(decodedBuffer.buffer());
-    Result res = (*_cb).writeToModel(addr, is);
+    Result res = _cb->writeToModel(addr, is);
 
     // send ack, if required for this address.
     if (_reqAddressInfo.replyAck) {
@@ -304,4 +307,4 @@ void RolandSysexHandler::handleCmdWrite(RolandSysexAddr& addr, BufferInputStream
     _logger.debug("Roland:Sysex:Write - cleanup.");
 }
 
-ClassLogger RolandSysexHandler::_logger(LC_MIDI_SYSEX);
+}

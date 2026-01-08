@@ -3,7 +3,7 @@
 
 #include <Arduino.h>
 
-#include <ClassLogger.h>
+#include <Logger.h>
 
 #include <midi/MidiCommon.h>
 #include <midi/MidiSink.h>
@@ -28,7 +28,7 @@ namespace ravensnight::midi {
 
         private:
 
-            static ClassLogger _logger;
+            static Logger _logger;
 
             uint8_t _taskPriority = MIDITASK_DEFAULT_PRIORITY;
             uint32_t _taskStackSize = MIDITASK_DEFAULT_STACKSIZE;
