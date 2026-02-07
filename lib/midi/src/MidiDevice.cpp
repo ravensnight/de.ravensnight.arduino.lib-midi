@@ -233,20 +233,30 @@ size_t MidiDevice::publish(uint8_t cable, uint8_t* buffer, size_t size) {
     int len = 0;
     uint8_t tries = 0;
     size_t sent = 0;
+    uint32_t time = 0;
     do {        
+        // get time
+        time = millis() + MIDIOUT_PACKAGE_DELAY_MS;
         sent = tud_midi_n_stream_write(0, cable, buffer + len, size - len);
-
+        
         if (sent == 0) {
             tries++;
-            if (tries > MAX_TRIES_MIDIWRITE) {
+            delay(MIDIOUT_RETRY_DELAY_MS);
+
+            if (tries > MIDIOUT_RETRY_MAXCOUNT) {
                 _logger.error("MidiDevice::publish - Only %d bytes of %d could be sent.");
                 return len;
             }
         } else {
             len += sent;
+            tries = 0;
         }
 
         _logger.debug("MidiDevice::publish - Sent %d bytes of %d", len, size);
+
+        // wait until repeat
+        while (millis() < time) {}
+
     } while (len < size);
 
     return len;
