@@ -21,7 +21,9 @@ namespace ravensnight::midi {
     #define MAX_CABLE_COUNT 3
 #endif
 
-#define MAX_TRIES_MIDIWRITE 5
+#define MIDIOUT_PACKAGE_DELAY_MS 5
+#define MIDIOUT_RETRY_DELAY_MS 40
+#define MIDIOUT_RETRY_MAXCOUNT 5
 
 typedef struct {
     int vendorId;
