@@ -24,7 +24,7 @@
     },
     {
       "name": "ravensnight lib-async",
-      "version": "1.7.0",
+      "version": "1.7.1",
       "platforms": [ "espressif32"]
     },
     {
