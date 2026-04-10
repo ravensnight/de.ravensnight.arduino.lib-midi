@@ -19,20 +19,17 @@
   "dependencies": [
     {
       "name": "ravensnight lib-logging",
-      "version": "1.6.1",
-      "platforms": [ "espressif32"]
-    },
-    {
-      "name": "ravensnight lib-async",
-      "version": "1.7.1",
-      "platforms": [ "espressif32"]
+      "version": "https://github.com/ravensnight/de.ravensnight.arduino.lib-logging.git#lib-logging-v1.7.0"
     },
     {
       "name": "ravensnight lib-utils",
-      "version": "1.6.0",
-      "platforms": [ "espressif32"]
+      "version": "https://github.com/ravensnight/de.ravensnight.arduino.lib-utils.git#lib-utils-v1.7.0"
+    },
+    {
+      "name": "ravensnight lib-async",
+      "version": "https://github.com/ravensnight/de.ravensnight.arduino.lib-async.git#lib-async-v1.7.2"
     }
-  ],
+  ],    
   "frameworks": "arduino",
   "platforms": "espressif32"
 }
