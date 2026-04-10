@@ -1,14 +1,13 @@
 {
   "name": "ravensnight lib-midi",
-  "version": "2.8.2",
+  "version": "2.8.3",
   "description": "Defines a midi IO framework with Roland SysEx API support.",
   "keywords": "midi sysex roland",
-  "repository" : {
-    "type" : "git",
-    "url" : "https://github.com/ravensnight/de.ravensnight.arduino.lib-midi"
-  }, 
-  "authors":
-  [
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ravensnight/de.ravensnight.arduino.lib-midi"
+  },
+  "authors": [
     {
       "name": "ravensnight",
       "email": "ravensnight@hoheisels-welt.de",
@@ -29,7 +28,7 @@
       "name": "ravensnight lib-async",
       "version": "https://github.com/ravensnight/de.ravensnight.arduino.lib-async.git#lib-async-v1.7.2"
     }
-  ],    
+  ],
   "frameworks": "arduino",
   "platforms": "espressif32"
 }
