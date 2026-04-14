@@ -9,7 +9,7 @@ namespace ravensnight::midi {
 
     class RolandSysexCallback {
         public:
-
+        
             /**
              * Provide the device ID expected to be set in message.
              */

@@ -56,18 +56,15 @@ namespace ravensnight::midi {
          * The given input data is expected to contain 7bit data up to number 127 (7F).
          * If it does not match it is being masqueraded.
          * 
-         * @param channel can be one of:
-         *  - the predefined manufacturer ID or 
-         *  - 0x00,  where buffer must contain first 2 bytes of a new-manufacturer ID
-         *  - 0x7E for Non-Realtime Messages or 
-         *  - 0x7F for Realtime messages
-         *  - any other specific ID.
+         * @param manCode the manufacturer code as 3byte code: 
+         *  - { 0x41, 0x00, 0x00 } for a dedicated single byte manufacturer id
+         *  - { 0x00, 0x22, 0x23 } any other specific 3-byte id.
          * 
          * @param buffer holds the bytes to be converted and sent
          * @return the number of bytes sent.
          * 
          */
-        size_t sendSysEx(uint8_t channel, Buffer& buffer);
+        size_t sendSysEx(SysexManCode& manCode, Buffer& buffer);
 
     };
 

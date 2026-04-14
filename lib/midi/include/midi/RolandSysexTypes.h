@@ -7,9 +7,9 @@
 
 namespace ravensnight::midi {
 
-    #define ROLAND_SYSEX_MAN_CODE           0x41
-    #define ROLAND_SYSEX_ADDR_SIZE          3
-    #define ROLAND_SYSEX_HDR_SIZE           3 + ROLAND_SYSEX_ADDR_SIZE  
+    #define ROLAND_SYSEX_MAN_CODE   { 0x41, 0x00, 0x00 }
+    #define ROLAND_SYSEX_ADDR_SIZE  3
+    #define ROLAND_SYSEX_HDR_SIZE   3 + ROLAND_SYSEX_ADDR_SIZE  
 
     typedef enum : uint8_t {
         undefined = 0x00,

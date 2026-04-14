@@ -139,7 +139,7 @@ bool MidiDevice::setup(const USBConfig& config) {
     USB.firmwareVersion(config.firmwareVersion);
     USB.usbPower(config.usbPower);
     USB.usbVersion(config.usbVersion);
-    USB.usbClass(TUSB_CLASS_AUDIO);
+    USB.usbClass(TUSB_CLASS_UNSPECIFIED); // IMPORTANT: This needs to be "unspecified" in order to force reading subdevice descriptors.
     USB.usbSubClass(0x00);
     USB.usbProtocol(0x00);
     USB.usbAttributes(0x80);    

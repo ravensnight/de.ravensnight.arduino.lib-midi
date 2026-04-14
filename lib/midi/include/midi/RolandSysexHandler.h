@@ -6,6 +6,7 @@
 #include <utils/BufferInputStream.h>
 #include <utils/Ref.hpp>
 
+#include <midi/MidiCommon.h>
 #include <midi/MidiTransmitter.h>
 #include <midi/SysexHandler.h>
 #include <midi/RolandSysexCallback.h>
@@ -27,11 +28,22 @@ namespace ravensnight::midi {
         checksum = 7,
         complete = 8
     };
+
     class RolandSysexHandler : public SysexHandler {
 
         public:
 
-            RolandSysexHandler(size_t bufferSize, Ref<RolandSysexCallback>& cb, Ref<MidiTransmitter>& out);
+            /**
+             * @param bufferSize defines the length of the sysex buffer to allocate
+             * @param manCode defines a manufacturer code to check for in receiving sysex messages. 
+             * @param cb the callback which accepts and provides data from / to clients
+             * @param out transmitter component to be used for sending replies
+             */
+            RolandSysexHandler(size_t bufferSize, SysexManCode& manCode, Ref<RolandSysexCallback>& cb, Ref<MidiTransmitter>& out);
+
+            /**
+             * Destruct this object.
+             */
             ~RolandSysexHandler();
 
             void init();
@@ -50,6 +62,8 @@ namespace ravensnight::midi {
             Command             _reqCommand;
             size_t              _reqPayloadSize;
             Stage               _stage;
+            uint8_t             _index;
+            SysexManCode        _manCode;
 
             Ref<MidiTransmitter> _out;
             Ref<RolandSysexCallback> _cb;

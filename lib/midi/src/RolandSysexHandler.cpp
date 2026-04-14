@@ -18,11 +18,13 @@ namespace ravensnight::midi {
 
 Logger RolandSysexHandler::_logger(LC_MIDI_SYSEX);
 
-RolandSysexHandler::RolandSysexHandler(size_t bufferSize, Ref<RolandSysexCallback>& cb, Ref<MidiTransmitter>& writer) :
+RolandSysexHandler::RolandSysexHandler(size_t bufferSize, SysexManCode& manCode, Ref<RolandSysexCallback>& cb, Ref<MidiTransmitter>& writer) :
     _reqBuffer(bufferSize),
     _cb(cb),
-    _out(writer)
+    _out(writer),
+    _manCode(manCode)
 {
+    _index = 0;
     _stage = Stage::undefined;
     _reqCommand = Command::undefined;
     _reqPayloadSize = 0;
@@ -41,6 +43,7 @@ void RolandSysexHandler::reset() {
 
     _logger.debug("Reset state machine.");
 
+    _index = 0;
     _reqBuffer.reset();
     _reqChecksum.reset();
     _reqCommand = Command::undefined;
@@ -62,14 +65,24 @@ void RolandSysexHandler::append(uint8_t byte) {
     }
 
     switch (_stage) {
-        case Stage::manufacturer:
-            if (byte == ROLAND_SYSEX_MAN_CODE) {
-                _stage = Stage::device;
-            } else {
-                _logger.warn("RolandSysexHander::append - invalid manufacturer: %02x", byte);
+        case Stage::manufacturer: {
+            if (_manCode.code[_index] == byte) {
+                if (((_index == 0) && (byte > 0)) || 
+                    (_index == 2)) 
+                {
+                    _stage = Stage::device;
+                    return;
+                } 
+
+                _index++;
+            }
+            else {
+                _logger.warn("RolandSysexHander::append - invalid manufacturer id part %02x at index %d", byte, _index);
                 reset();
             }
+
             return;
+        }
 
         case Stage::device:
             if (byte == _cb->getDeviceID()) {
@@ -93,6 +106,7 @@ void RolandSysexHandler::append(uint8_t byte) {
             if ((byte == Command::read) || (byte == Command::write)) {
                 _reqCommand = (Command)byte;
                 _stage = Stage::address;
+                _reqBuffer.reset();
             } else {
                 _logger.warn("RolandSysexHander::append - invalid command: %02x", byte);
                 reset();
@@ -221,7 +235,7 @@ void RolandSysexHandler::sendReply(RolandSysexAddr& targetAddr, const uint8_t* d
     midiOut << checksum;
 
     _logger.debug("Roland:Sysex:Read - Send sysex checksum:%x len:%d.", checksum.value(), midiOut.buffer().length());        
-    (*_out).sendSysEx(ROLAND_SYSEX_MAN_CODE, midiOut.buffer());
+    (*_out).sendSysEx(_manCode, midiOut.buffer());
 }
 
 void RolandSysexHandler::handleCmdRead(RolandSysexAddr& addr, BufferInputStream& inputStream) {

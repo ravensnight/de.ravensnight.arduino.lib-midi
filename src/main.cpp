@@ -46,9 +46,13 @@ class MyVoiceCallback : public VoiceCallback {
     void onMidiContinue() {};    
 };
 
+SysexManCode manufacturer = {
+    .code = ROLAND_SYSEX_MAN_CODE
+};
+
 Ref<MidiTransmitter> midiOut(new MidiTransmitter(0, 256));
 Ref<RolandSysexCallback> callback(new MySysexCallback());
-Ref<SysexHandler> roland(new RolandSysexHandler(1024, callback, midiOut));
+Ref<SysexHandler> roland(new RolandSysexHandler(1024, manufacturer, callback, midiOut));
 Ref<SysexReceiver> sysexReceiver(new SysexReceiver(roland));
 
 Ref<VoiceCallback> voiceCallback(new MyVoiceCallback());

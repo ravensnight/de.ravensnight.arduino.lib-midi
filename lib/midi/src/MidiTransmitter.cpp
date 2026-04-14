@@ -129,8 +129,10 @@ void MidiTransmitter::sendMidiContinue() {
     send(MessageType::MidiContinue, 0, 0, 0);
 }
 
-size_t MidiTransmitter::sendSysEx(uint8_t channel, Buffer& message) {    
-    uint16_t size = message.length() + 3; // + begin + channel + end
+size_t MidiTransmitter::sendSysEx(SysexManCode& manCode, Buffer& message) {    
+    uint8_t manCodeLen = manCode.code[0] > 0 ? 3 : 1;
+
+    uint16_t size = message.length() + manCodeLen + 2; // + begin + channel + end
     if (size > _outBuffer.avail()) {
         _logger.error("MidiTransmitter::sendSysEx - outbuffer size %d exceeded by payload size %d(%d). Cannot send sysex!", _outBuffer.avail(), size, message.length());
         return -1;
@@ -139,7 +141,10 @@ size_t MidiTransmitter::sendSysEx(uint8_t channel, Buffer& message) {
     BufferOutputStream os(_outBuffer.bytes(), size);
 
     os << (uint8_t)MessageType::SysExStart;
-    os << channel;
+    for (uint8_t i = 0; i < manCodeLen; i++) {
+        os << manCode.code[i];
+    }
+        
     os << message;
     os << (uint8_t)MessageType::SysExEnd;
 

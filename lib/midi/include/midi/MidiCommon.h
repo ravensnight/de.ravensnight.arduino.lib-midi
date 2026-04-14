@@ -64,6 +64,13 @@ namespace ravensnight::midi {
         uint8_t msgLength;
     } MidiEvent;
 
+    /**
+     * Defines the manufacturer code.
+     */
+    typedef struct {
+        uint8_t code[3];
+    } SysexManCode;
+    
 }
 
 
