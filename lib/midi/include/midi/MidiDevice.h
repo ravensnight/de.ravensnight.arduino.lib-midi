@@ -21,9 +21,7 @@ namespace ravensnight::midi {
     #define MAX_CABLE_COUNT 3
 #endif
 
-#define MIDIOUT_PACKAGE_DELAY_MS 5
-#define MIDIOUT_RETRY_DELAY_MS 40
-#define MIDIOUT_RETRY_MAXCOUNT 5
+#define MIDIOUT_PACKAGE_DELAY_MS 2
 
 typedef struct {
     int vendorId;
@@ -41,6 +39,11 @@ typedef struct {
     char name[MAX_CABLE_NAMELEN + 1] = { 0 };
     MidiReceiver* receiver = 0;
 } CableDef ;
+
+enum class TransmitStrategy {
+    unreliable,
+    useRetries
+};
 
 class MidiDevice {
 

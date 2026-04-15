@@ -130,7 +130,7 @@ void MidiTransmitter::sendMidiContinue() {
 }
 
 size_t MidiTransmitter::sendSysEx(SysexManCode& manCode, Buffer& message) {    
-    uint8_t manCodeLen = manCode.code[0] > 0 ? 3 : 1;
+    uint8_t manCodeLen = manCode.code[0] > 0 ? 1 : 3;
 
     uint16_t size = message.length() + manCodeLen + 2; // + begin + channel + end
     if (size > _outBuffer.avail()) {
